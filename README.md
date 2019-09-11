@@ -5,7 +5,7 @@ Aplicativo para consultar CEP através da API do VIA CEP
 Tutorial de criação deste app: http://bit.ly/2kcGFQh
 
 <p align="center">
-    <img src="https://miro.medium.com/max/1440/1*oUhhTFGunBMuh4Av-7rR7A.png" width="800"/>
+    <img src="https://miro.medium.com/max/1440/1*St_MBopTzlcfQzasVw1-GA.png" width="800"/>
 </p>
 
 ## Como clonar e importar
