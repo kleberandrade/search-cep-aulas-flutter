@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:search_cep/models/result_cep.dart';
 import 'package:search_cep/services/via_cep_service.dart';
 
 class HomePage extends StatefulWidget {
@@ -8,6 +7,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  String _result;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,7 +21,8 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             _buildSearchCepTextField(),
-            _buildSearchCepButton()
+            _buildSearchCepButton(),
+            _buildResultForm()
           ],
         ),
       ),
@@ -41,9 +43,7 @@ class _HomePageState extends State<HomePage> {
     return Padding(
       padding: const EdgeInsets.only(top: 20.0),
       child: RaisedButton(
-        onPressed: () {
-          _searchCep();
-        },
+        onPressed: _searchCep,
         child: _loading ? _circularLoading() : Text('Consultar'),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
@@ -53,14 +53,15 @@ class _HomePageState extends State<HomePage> {
   bool _loading = false;
   bool _enableField = true;
 
-  void _searching(bool enable){
+  void _searching(bool enable) {
     setState(() {
+      _result = enable ? '' : _result;
       _loading = enable;
       _enableField = !enable;
     });
   }
 
-  Widget _circularLoading(){
+  Widget _circularLoading() {
     return Container(
       height: 15.0,
       width: 15.0,
@@ -70,9 +71,23 @@ class _HomePageState extends State<HomePage> {
 
   Future _searchCep() async {
     _searching(true);
+
     final cep = _searchCepController.text;
+
     final resultCep = await ViaCepService.fetchCep(cep: cep);
-    print(resultCep.toJson());
+    print(resultCep.localidade); // Exibindo somente a localidade no terminal
+
+    setState(() {
+      _result = resultCep.toJson();
+    });
+
     _searching(false);
+  }
+
+  Widget _buildResultForm() {
+    return Container(
+      padding: EdgeInsets.only(top: 20.0),
+      child: Text(_result ?? ''),
+    );
   }
 }
