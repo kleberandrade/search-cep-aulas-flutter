@@ -7,7 +7,16 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  var _searchCepController = TextEditingController();
+  bool _loading = false;
+  bool _enableField = true;
   String _result;
+
+  @override
+  void dispose() {
+    super.dispose();
+    _searchCepController.clear();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,10 +38,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  var _searchCepController = TextEditingController();
-
   Widget _buildSearchCepTextField() {
     return TextField(
+      autofocus: true,
+      keyboardType: TextInputType.number,
+      textInputAction: TextInputAction.done,
       decoration: InputDecoration(labelText: 'Cep'),
       controller: _searchCepController,
       enabled: _enableField,
@@ -49,9 +59,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  bool _loading = false;
-  bool _enableField = true;
 
   void _searching(bool enable) {
     setState(() {
