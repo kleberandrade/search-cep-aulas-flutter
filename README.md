@@ -86,7 +86,7 @@ flutter devices
 flutter drive --driver=test_driver/android_live_driver.dart --target=integration_test/android_live_test.dart -d emulator-5554
 ```
 
-The driver saves actual device PNGs and a result report at `build/android-live-result.json`. The live test is excluded from CI because it depends on ViaCEP/network availability; CI builds the release APK. This was an emulator check, not a physical-phone test or performance measurement. Release signing still uses the classroom debug key and is not configured for Google Play distribution.
+The driver saves actual device PNGs and a result report at `build/android-live-result.json`. The live test is excluded from CI because it depends on ViaCEP/network availability; CI builds the release APK. This was an emulator check, not a physical-phone test or performance measurement. Release signing still uses the classroom debug key and is not configured for Google Play distribution. Both CI jobs passed for this Android change: [verification and release APK build](https://github.com/kleberandrade/search-cep-aulas-flutter/actions/runs/44097659142).
 
 ![Actual Android emulator: live ViaCEP address and copy action](docs/screenshots/android-address.png)
 
