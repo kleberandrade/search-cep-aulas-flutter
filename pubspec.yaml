@@ -3,14 +3,13 @@ description: Accessible Brazilian postal code lookup with Flutter and ViaCEP.
 publish_to: none
 version: 2.0.0+2
 environment:
-  sdk: '>=3.11.0 <4.0.0'
-  flutter: '>=3.41.0'
+  sdk: '>=3.14.0 <4.0.0'
+  flutter: '>=3.50.0'
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations:
-    sdk: flutter
   http: ^1.6.0
+  material_ui: ^1.11.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

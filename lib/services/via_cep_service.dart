@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
+
 import '../domain/cep.dart';
 import '../models/result_cep.dart';
 

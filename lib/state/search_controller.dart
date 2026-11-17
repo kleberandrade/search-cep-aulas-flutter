@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+
 import '../domain/cep.dart';
 import '../models/result_cep.dart';
 import '../services/via_cep_service.dart';

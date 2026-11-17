@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import '../domain/cep.dart';
 
 /// Immutable validated response. Empty optional fields are legitimate in ViaCEP.

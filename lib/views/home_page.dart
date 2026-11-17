@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+
 import '../models/result_cep.dart';
 import '../state/search_controller.dart' as search;
 
@@ -215,8 +216,7 @@ class _HomePageState extends State<HomePage> {
     search.SearchIdle() => const _StatusPanel(
       icon: Icons.location_on_outlined,
       title: 'Seu próximo destino começa aqui',
-      message:
-          'O endereço aparecerá aqui após a consulta.\nSe preferir, comece por um dos exemplos.',
+      message: 'O endereço aparecerá aqui após a consulta.\nSe preferir, comece por um dos exemplos.',
     ),
   };
 }

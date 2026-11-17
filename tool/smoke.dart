@@ -1,5 +1,6 @@
 // Optional live integration check. Never part of the deterministic test suite.
 import 'dart:io';
+
 import 'package:http/http.dart' as http;
 import 'package:search_cep/domain/cep.dart';
 import 'package:search_cep/services/via_cep_service.dart';

@@ -74,3 +74,6 @@ coverage/
 .metrics/
 .flutter-plugins-dependencies
 **/flutter_export_environment.sh
+
+# Local version-manager SDK links and caches
+.fvm/
