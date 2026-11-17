@@ -1,0 +1,38 @@
+{
+  "checked": [
+    "initial state",
+    "invalid input",
+    "real ViaCEP address with UTF-8",
+    "real Android clipboard",
+    "clear removes prior result",
+    "real nonexistent CEP response"
+  ],
+  "appVersion": "2.0.2+4",
+  "captureSource": "integration_test: actual Android device surface",
+  "files": [
+    "docs/screenshots/android-initial.png",
+    "docs/screenshots/android-validation.png",
+    "docs/screenshots/android-address.png",
+    "docs/screenshots/android-not-found.png"
+  ],
+  "device": {
+    "kind": "emulator",
+    "avd": "Search_CEP_API_36",
+    "android": "16",
+    "api": 36,
+    "abi": "arm64-v8a",
+    "systemImage": "Google APIs",
+    "profile": "Pixel 7"
+  },
+  "mode": "debug",
+  "date": "2026-11-17",
+  "releaseBuild": {
+    "versionName": "2.0.2",
+    "versionCode": 4,
+    "minSdk": 24,
+    "targetSdk": 36,
+    "result": "passed"
+  },
+  "releaseStartup": "passed on the same emulator; separate from debug integration flow",
+  "physicalDeviceTested": false
+}

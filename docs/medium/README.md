@@ -2,7 +2,8 @@
 
 - `article.pt-BR.html`: complete revised Portuguese teaching article, with progressive explanations, actual source excerpts, exercises and image captions.
 - `cover.png`: original editorial cover generated using the built-in image generator; illustrative, not an app screenshot.
-- `../screenshots/web-*.jpg`: real running application captures used in the lesson.
+- `../screenshots/web-*.jpg`: real running Web application captures used in the lesson.
+- `../screenshots/android-*.png`: native Android integration-test surface captures (Android 16/API 36 ARM64), not browser device emulation.
 
 Target article: https://medium.com/flutter-comunidade-br/consultando-ceps-com-flutter-a395b86ce34a
 
@@ -25,3 +26,8 @@ The teaching source now explains exact overrides for material_color_utilities 0.
 ## Editorial convention
 
 Every student-facing article must end with exactly **five app-improvement challenges**. Put credits/references before that final section. Each challenge should name a concrete feature and a checkable acceptance criterion. Do not append a closing paragraph after the challenges. This convention was explicitly requested by the author.
+
+
+## App 2.0.2+4: Android validation
+
+The current source adds a didactic Android section: build versus device interaction, the official Flutter 3.50 Android configuration, exact build/device commands, release startup and a separate debug integration flow with six real-service/clipboard checks. Four native screenshots are archived; the address capture appears as Figure 5. Physical-phone testing, performance measurement and production signing are not claimed. The final five challenges remain the last content section. Publication evidence is recorded after republishing.

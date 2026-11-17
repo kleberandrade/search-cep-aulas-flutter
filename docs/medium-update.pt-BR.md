@@ -14,7 +14,7 @@ Preserve o título “Consultando CEPs com Flutter”, o subtítulo “Notas de 
 
 ## Texto de atualização para inserir após a introdução
 
-Esta aula acompanha o aplicativo 2.0.1+3, com Flutter 3.50.0 e Dart 3.14.0, com null safety e Material 3. Vamos consultar o ViaCEP sem chave de API, validar o CEP antes da requisição e apresentar um endereço legível. Também vamos tratar conexão indisponível, timeout, CEP inexistente e respostas inválidas. A consulta é enviada ao ViaCEP; o aplicativo não salva histórico nem endereços no dispositivo.
+Esta aula acompanha o aplicativo 2.0.2+4, com Flutter 3.50.0 e Dart 3.14.0, com null safety e Material 3. Vamos consultar o ViaCEP sem chave de API, validar o CEP antes da requisição e apresentar um endereço legível. Também vamos tratar conexão indisponível, timeout, CEP inexistente e respostas inválidas. A consulta é enviada ao ViaCEP; o aplicativo não salva histórico nem endereços no dispositivo.
 
 ## Criando e executando o projeto
 
@@ -68,7 +68,7 @@ Substitua os embeds correspondentes às seções Dependências, Classe ResultCep
 name: search_cep
 description: Accessible Brazilian postal code lookup with Flutter and ViaCEP.
 publish_to: none
-version: 2.0.1+3
+version: 2.0.2+4
 environment:
   sdk: '>=3.14.0 <4.0.0'
   flutter: '>=3.50.0'
@@ -78,6 +78,8 @@ dependencies:
   http: ^1.6.0
   material_ui: ^1.11.1
 dev_dependencies:
+  integration_test:
+    sdk: flutter
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
@@ -825,7 +827,7 @@ Para Android, é preciso configurar o SDK e aceitar pessoalmente as licenças ne
 
 ## Overrides verificados
 
-A versão 2.0.1+3 compartilha os overrides exatos material_color_utilities 0.13.1 e test_api 0.7.15 após o experimento passar em análise, 21 testes e builds Web/macOS release/iOS sem assinatura. Eles substituem as restrições do SDK; a compatibilidade observada vale para a combinação testada. Compare `flutter pub outdated` e `flutter pub outdated --no-dependency-overrides` e revalide a cada atualização. A versão didática publicada explica a manutenção e a remoção futura desses overrides.
+A versão 2.0.2+4 compartilha os overrides exatos material_color_utilities 0.13.1 e test_api 0.7.15 após o experimento passar em análise, 21 testes e builds Web/macOS release/iOS sem assinatura. Eles substituem as restrições do SDK; a compatibilidade observada vale para a combinação testada. Compare `flutter pub outdated` e `flutter pub outdated --no-dependency-overrides` e revalide a cada atualização. A versão didática publicada explica a manutenção e a remoção futura desses overrides.
 
 ## Cinco desafios finais
 
@@ -838,3 +840,12 @@ Histórico local com limpeza. Armazene os cinco últimos CEPs consultados com su
 Cópia e compartilhamento completos. Inclua o complemento, quando houver, no texto copiado e implemente compartilhamento nas plataformas escolhidas. Critério de entrega: campos vazios não criam linhas desnecessárias, o conteúdo compartilhado corresponde ao endereço e o usuário recebe uma alternativa quando a ação não estiver disponível.
 
 Busca automática sem respostas antigas. Consulte após 400 ms sem digitação, somente quando houver um CEP válido, preservando a geração de cada consulta. Critério de entrega: digitação rápida não dispara consultas incompletas e um teste com respostas fora de ordem prova que o resultado antigo não substitui o novo.
+
+
+## Validação Android — 2.0.2+4
+
+Os APKs debug e release passaram após a migração para o template Flutter 3.50 (Gradle 9.5.0, AGP 9.3.1, plugin Kotlin registrado 2.4.20; JDK 21 com alvos Java/Kotlin 17). O migrador mantém android.builtInKotlin=false e android.newDsl=false. A validação de dependências não foi contornada.
+
+Release instalado e iniciado no emulador Android 16/API 36 Google APIs ARM64, perfil Pixel 7. Pacote: versionName 2.0.2, versionCode 4, minSdk 24, targetSdk 36. Um teste de integração em debug passou com seis verificações: estado inicial, entrada inválida, consulta real UTF-8, clipboard Android, limpeza e CEP inexistente. São verificações separadas dos 21 testes determinísticos. Não houve teste em telefone físico nem medição de desempenho. Assinatura release ainda didática, com chave debug.
+
+Reprodução: `flutter build apk --debug`, `flutter build apk --release` e `flutter drive --driver=test_driver/android_live_driver.dart --target=integration_test/android_live_test.dart -d emulator-5554`. Use o identificador mostrado por `flutter devices`. O driver gera PNGs nativos e `build/android-live-result.json`; a API externa não participa do CI. Nenhuma licença foi aceita pelo agente; apesar do aviso parcial do doctor, os componentes usados funcionaram sem novos termos.
