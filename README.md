@@ -1,7 +1,7 @@
 # Brazilian Postal Code Lookup
 
-[![Flutter 3.41.9](https://img.shields.io/badge/Flutter-3.41.9-02569B)](https://docs.flutter.dev/)
-[![Dart 3.11.5](https://img.shields.io/badge/Dart-3.11.5-0175C2)](https://dart.dev/)
+[![Flutter 3.50.0](https://img.shields.io/badge/Flutter-3.50.0-02569B)](https://docs.flutter.dev/)
+[![Dart 3.14.0](https://img.shields.io/badge/Dart-3.14.0-0175C2)](https://dart.dev/)
 [![License MIT](https://img.shields.io/badge/License-MIT-555555)](LICENSE)
 
 A Flutter classroom app for looking up Brazilian postal codes through [ViaCEP](https://viacep.com.br/). It validates input, handles service failures, and presents selectable address details in a responsive Material 3 interface. No API key, Firebase project, account, or database is needed.
@@ -10,7 +10,18 @@ A Flutter classroom app for looking up Brazilian postal codes through [ViaCEP](h
 
 ## Run
 
-Verified toolchain: Flutter **3.41.9** stable with Dart **3.11.5**, Chrome 157, and Xcode 27.2 on macOS. The manifest requires Dart >=3.11.0 <4.0.0 and Flutter >=3.41.0. Use the pinned toolchain for reproducible builds; newer SDKs have not been verified.
+Install the pinned SDK through the [official Flutter instructions](https://docs.flutter.dev/install/manual), or use `fvm use 3.50.0` if you manage SDKs with FVM. An isolated tagged checkout is another reproducible option after cloning this repository:
+
+```sh
+git clone --depth 1 --branch 3.50.0 https://github.com/flutter/flutter.git ../flutter-3.50.0
+export PATH="$PWD/../flutter-3.50.0/bin:$PATH"
+flutter --version
+```
+
+This selects the new SDK only in the current terminal; it does not upgrade the SDK used by other projects.
+
+
+Verified toolchain: Flutter **3.50.0** stable with Dart **3.14.0**, Chrome 157, and Xcode 27.2 on macOS. The manifest requires Dart >=3.14.0 <4.0.0 and Flutter >=3.50.0. The project pins Flutter 3.50.0 in `.fvmrc` and CI. Use this SDK for all commands below; Dart comes bundled with Flutter. The shared system installation is not modified by this project.
 
 ```sh
 git clone https://github.com/kleberandrade/search-cep-aulas-flutter.git
@@ -52,7 +63,7 @@ flutter build web
 # Optional integration check: contacts the actual external service
 dart run tool/smoke.dart
 # Native builds require the corresponding local toolchain
-flutter build macos --debug
+flutter build macos
 flutter build ios --no-codesign
 flutter build apk --debug
 ```
@@ -71,9 +82,11 @@ Open `http://127.0.0.1:8766`. A production host must serve the generated `build/
 
 ## Migration from the 2019 classroom version
 
-Dart 2 nullable mutable fields were replaced with Dart 3 null-safe immutable boundary parsing. `RaisedButton` was replaced with Material 3 buttons, raw JSON output with address fields, and static `fetchCep` with an injected service: `ViaCepService(client).lookup(Cep.parse(input))`. The HTTP client belongs to the caller, which must close it. Code using the old internal Dart API must adopt this call; this application is not a published package.
+Dart 2 nullable mutable fields were replaced with Dart 3 null-safe immutable boundary parsing. The current Flutter 3.50 migration uses the official standalone `material_ui` 1.11.1 package and its localization delegates, replacing the deprecated `package:flutter/material.dart` imports. `flutter_localizations` is now transitive rather than an application dependency. `RaisedButton` was replaced with Material 3 buttons, raw JSON output with address fields, and static `fetchCep` with an injected service: `ViaCepService(client).lookup(Cep.parse(input))`. The HTTP client belongs to the caller, which must close it. Code using the old internal Dart API must adopt this call; this application is not a published package.
 
 Android now uses the Flutter plugin DSL, Kotlin 2.2.20, AGP 8.11.1, Gradle 8.14 and Java 17 source compatibility; SDK levels follow the installed Flutter defaults. INTERNET permission is present in the release manifest. Android retains `com.example.search_cep` and iOS retains `com.example.searchCep`; configure signing and a production identifier before distributing your own app. Local SDK paths and generated registrants are no longer tracked.
+
+The Flutter 3.50 upgrade advanced eight of the nine previously outdated transitives: clock 1.1.3, intl 0.20.3, matcher 0.12.20, meta 1.19.0, stack_trace 1.12.2, test_api 0.7.14, vector_math 2.4.4 and web 1.1.2. Seven reached the latest available version. Two newer versions remain blocked by exact constraints in the official stable SDK: `material_color_utilities` is pinned to 0.13.0 (latest 0.13.1), and `flutter_test` pins `test_api` to 0.7.14 (latest 0.7.15). No SDK edits or dependency overrides are used. See `docs/dependencies-flutter-3.50.json` for the actual resolver report.
 
 The iOS runner uses the modern Flutter scene lifecycle; its minimum target is iOS 15. macOS minimum is 12 to match the available Xcode toolchain. Web and macOS runners were added from the installed Flutter templates. Original iOS artwork and MIT attribution are preserved. Android licenses must be accepted by the developer, never by automation. No persistent store existed before or after this migration, so no data migration is needed.
 

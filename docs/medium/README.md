@@ -14,6 +14,6 @@ Generated with the built-in image tool on 2026-11-17. Flutter branding remains s
 
 Updated and republished on 2026-11-17 at the original URL above. Title, subtitle, authorship and publication identity were preserved. The cover is also the page's sharing image. All five images loaded successfully with captions/alternative text, and all 13 imported code blocks matched the prepared excerpts. No subscriber email/newsletter was sent.
 
-Evidence: `published-cover.jpg`, `published-lesson.jpg`. Local application validation after checking all packages: analyze clean, 21 tests passed. All direct/development packages were current; nine transitives remain pinned by the compatible SDK dependency graph.
+Evidence: `published-cover.jpg`, `published-lesson.jpg`. Local application validation after checking all packages: analyze clean, 21 tests passed. All direct/development packages were current; Flutter 3.50.0 / Dart 3.14.0 now advance eight of the original nine outdated transitives; two latest versions remain blocked by exact official SDK pins. The article explains both constraints.
 
 The archived `../medium-update.pt-BR.md` is a complete technical reference; `article.pt-BR.html` is the didactic publication source.

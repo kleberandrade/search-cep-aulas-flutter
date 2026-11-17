@@ -2,12 +2,12 @@
 <figure><img src="https://raw.githubusercontent.com/kleberandrade/search-cep-aulas-flutter/master/docs/medium/cover.png" alt="Capa: Consultando CEPs com Flutter. Envelope com símbolo Flutter, marcador de localização e mapa do Brasil em tons de verde. Subtítulo: Da validação ao endereço com ViaCEP."><figcaption>Ilustração de capa criada com auxílio de IA para esta atualização. As telas ao longo da aula são capturas reais do aplicativo.</figcaption></figure>
 <p>Como transformar oito números em um endereço legível? Nesta aula vamos consultar o ViaCEP com Flutter, validar a entrada antes de acessar a rede e apresentar o resultado em uma interface acessível. O objetivo é compreender cada responsabilidade, do campo de texto até a resposta HTTP, e aprender a lidar com os caminhos em que a consulta falha.</p>
 <p>O CEP — Código de Endereçamento Postal — tem oito algarismos. Ele pode identificar um logradouro, uma localidade ou uma unidade específica. Por isso, um retorno sem rua ou bairro não significa necessariamente um erro. Os zeros à esquerda também fazem parte do código: CEP é texto, não um número para fazer contas.</p>
-<p><strong>Atualização da aula, novembro de 2026:</strong> o projeto foi migrado para Flutter 3.41.9, Dart 3.11.5, null safety e Material 3. O título, a autoria e a finalidade desta nota de aula de 2019 foram mantidos. Os exemplos abaixo acompanham o código atual do repositório; os antigos componentes e capturas foram substituídos.</p>
+<p><strong>Atualização da aula, novembro de 2026:</strong> o projeto foi migrado para Flutter 3.50.0, Dart 3.14.0, null safety e Material 3. O título, a autoria e a finalidade desta nota de aula de 2019 foram mantidos. Os exemplos abaixo acompanham o código atual do repositório; os antigos componentes e capturas foram substituídos.</p>
 <h2>O que você vai aprender</h2>
 <ul><li>Validar e normalizar um CEP sem perder zeros à esquerda.</li><li>Fazer uma requisição HTTPS com um cliente HTTP que pode ser substituído nos testes.</li><li>Converter JSON em um endereço imutável e validar dados externos.</li><li>Distinguir carregamento, sucesso, entrada inválida, CEP inexistente e falha de conexão.</li><li>Impedir que uma resposta atrasada substitua uma pesquisa mais recente.</li><li>Testar a lógica e a interface usando exemplos controlados.</li></ul>
 <h2>1. Prepare o laboratório</h2>
-<p>Você precisa conhecer classes, funções e widgets básicos do Flutter. Instale Flutter 3.41.9 stable com o Dart 3.11.5 que acompanha essa versão e tenha Chrome disponível. Nesta aula usaremos a Web para facilitar a experimentação; não é necessário configurar um emulador ou obter uma chave de API.</p>
-<p>Clone a versão completa para executar o laboratório. Os blocos a seguir analisam partes do projeto, não substituem todos os arquivos de um aplicativo criado do zero.</p>
+<p>Você precisa conhecer classes, funções e widgets básicos do Flutter. Instale Flutter 3.50.0 stable com o Dart 3.14.0 que acompanha essa versão e tenha Chrome disponível. Nesta aula usaremos a Web para facilitar a experimentação; não é necessário configurar um emulador ou obter uma chave de API.</p>
+<p>O arquivo <code>.fvmrc</code> registra Flutter 3.50.0 para quem usa FVM. Você também pode selecionar essa versão pela instalação oficial do Flutter. Confirme que <code>flutter --version</code> mostra Flutter 3.50.0 e Dart 3.14.0 antes de continuar. Clone a versão completa para executar o laboratório. Os blocos a seguir analisam partes do projeto, não substituem todos os arquivos de um aplicativo criado do zero.</p>
 <pre><code class="language-bash">git clone https://github.com/kleberandrade/search-cep-aulas-flutter.git
 cd search-cep-aulas-flutter
 flutter --version
@@ -16,20 +16,19 @@ flutter run -d chrome</code></pre>
 <p><strong>Checkpoint:</strong> a tela deve mostrar o campo CEP, o botão “Buscar endereço” e um painel aguardando a primeira consulta. Se o Flutter não encontrar Chrome, verifique os dispositivos com <code>flutter devices</code>.</p>
 <figure><img src="https://raw.githubusercontent.com/kleberandrade/search-cep-aulas-flutter/master/docs/screenshots/web-empty.jpg" alt="Tela inicial do Consulta CEP no navegador, com campo CEP, botão Buscar endereço, exemplos e painel aguardando a consulta."><figcaption>Figura 1 — Estado inicial real: o formulário explica o formato aceito e o painel informa onde aparecerá o resultado.</figcaption></figure>
 <h2>2. Entenda as dependências</h2>
-<p>O <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/pubspec.yaml">pubspec.yaml</a> declara <code>http: ^1.6.0</code> para as requisições e <code>flutter_lints: ^6.0.0</code> para análise estática. <code>flutter_localizations</code> e <code>flutter_test</code> vêm do SDK. O projeto não precisa de Firebase, cadastro nem banco de dados.</p>
+<p>O <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/pubspec.yaml">pubspec.yaml</a> declara <code>http: ^1.6.0</code> para as requisições e <code>flutter_lints: ^6.0.0</code> para análise estática. <code>material_ui: ^1.11.1</code> fornece os widgets Material e suas traduções; <code>flutter_test</code> vem do SDK. No Flutter 3.50, usamos <code>package:material_ui/material_ui.dart</code> no lugar do import Material que foi descontinuado dentro do framework. As traduções continuam configuradas por <code>GlobalMaterialLocalizations.delegates</code>. O projeto não precisa de Firebase, cadastro nem banco de dados.</p>
 <pre><code class="language-yaml">name: search_cep
 description: Accessible Brazilian postal code lookup with Flutter and ViaCEP.
 publish_to: none
 version: 2.0.0+2
 environment:
-  sdk: &#x27;&gt;=3.11.0 &lt;4.0.0&#x27;
-  flutter: &#x27;&gt;=3.41.0&#x27;
+  sdk: &#x27;&gt;=3.14.0 &lt;4.0.0&#x27;
+  flutter: &#x27;&gt;=3.50.0&#x27;
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations:
-    sdk: flutter
   http: ^1.6.0
+  material_ui: ^1.11.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -43,7 +42,7 @@ flutter:
 flutter pub upgrade --major-versions
 flutter analyze
 flutter test</code></pre>
-<p>Na verificação desta atualização, todas as dependências diretas e de desenvolvimento já estavam atualizadas. Nove dependências transitivas têm versões mais novas, mas continuam fixadas pelas restrições compatíveis com este SDK. A versão “Latest” exibida pelo Pub não significa, por si só, que ela pode ser usada com o Flutter instalado. Mantenha o conjunto coerente ao atualizar o SDK.</p>
+<p>A atualização para Flutter 3.50.0 e Dart 3.14.0 permitiu avançar oito dos nove pacotes transitivos antes desatualizados. Sete chegaram à versão mais recente: clock 1.1.3, intl 0.20.3, matcher 0.12.20, meta 1.19.0, stack_trace 1.12.2, vector_math 2.4.4 e web 1.1.2. O test_api também avançou, de 0.7.10 para 0.7.14, mas a versão mais nova é 0.7.15. O SDK estável ainda fixa material_color_utilities em 0.13.0 e flutter_test fixa test_api em 0.7.14. Por isso, essas duas versões mais novas não são resolvíveis neste conjunto. Não alteramos o SDK nem usamos overrides para forçar a resolução. A coluna “Latest” do Pub mostra a versão publicada; “Resolvable” mostra o que pode ser usado com o conjunto instalado.</p>
 <h2>3. API, HTTPS e JSON: o caminho da consulta</h2>
 <p>Uma API é uma interface pela qual programas trocam informações. Aqui o aplicativo envia uma requisição GET ao ViaCEP e recebe um documento JSON. JSON é o formato dos dados; o endereço na tela é a interpretação desses dados pelo nosso código.</p>
 <pre><code class="language-plaintext">https://viacep.com.br/ws/01001000/json/</code></pre>
@@ -235,7 +234,7 @@ class SearchController extends ChangeNotifier {
 }</code></pre>
 <p>Observe a sequência em <code>search</code>: validar, emitir carregamento, esperar o serviço e publicar o resultado se a geração ainda for atual. <code>inputChanged</code> invalida a consulta anterior, e <code>dispose</code> impede notificações depois que o controlador foi encerrado.</p>
 <h2>8. Apresente informações em vez de JSON bruto</h2>
-<p>Em <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/lib/main.dart">main.dart</a>, <code>CepApp</code> configura Material 3 e a localização em português. O widget proprietário cria o cliente e o controlador quando eles não são injetados e libera esses recursos no descarte. A <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/lib/views/home_page.dart">HomePage completa</a> separa formulário, painel de status e cartão de endereço em widgets.</p>
+<p>Em <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/lib/main.dart">main.dart</a>, <code>CepApp</code> configura Material 3 e a localização em português usando o pacote independente <code>material_ui</code>. O widget proprietário cria o cliente e o controlador quando eles não são injetados e libera esses recursos no descarte. A <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/lib/views/home_page.dart">HomePage completa</a> separa formulário, painel de status e cartão de endereço em widgets.</p>
 <p>O campo usa <code>TextInputAction.search</code>: pressionar Enter realiza a busca. O botão Limpar CEP apaga entrada e resultado e devolve o foco ao campo. O texto permanece editável durante a consulta, e os estados de carregamento e erro não bloqueiam uma nova tentativa.</p>
 <p>Este trecho real de <code>HomePage</code> escolhe a apresentação de cada estado:</p>
 <pre><code class="language-dart">  Widget _result(search.SearchState state) =&gt; switch (state) {
@@ -255,8 +254,7 @@ class SearchController extends ChangeNotifier {
     search.SearchIdle() =&gt; const _StatusPanel(
       icon: Icons.location_on_outlined,
       title: &#x27;Seu próximo destino começa aqui&#x27;,
-      message:
-          &#x27;O endereço aparecerá aqui após a consulta.\nSe preferir, comece por um dos exemplos.&#x27;,
+      message: &#x27;O endereço aparecerá aqui após a consulta.\nSe preferir, comece por um dos exemplos.&#x27;,
     ),
   };</code></pre>
 <p>O retorno é exibido em campos selecionáveis: CEP, logradouro, bairro, cidade/UF, complemento, DDD e IBGE, conforme o que o serviço informar. Os valores também possuem rótulos acessíveis, e as mudanças de estado são anunciadas pela semântica do Flutter. O botão Copiar endereço mostra uma confirmação; se a área de transferência falhar, o texto continua disponível para seleção.</p>
@@ -276,7 +274,7 @@ flutter build web</code></pre>
 <p>O código dos testes está em <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/test/lookup_test.dart">test/lookup_test.dart</a>, <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/test/demo_test.dart">test/demo_test.dart</a> e <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/test/widget_test.dart">test/widget_test.dart</a>. Eles usam fixtures e <code>MockClient</code>; não acessam a API real. Na validação desta versão, 21 testes passaram e a cobertura de linhas medida foi de 90,8%. Esse número não substitui os cenários de teste nem representa cobertura de mutação.</p>
 <p>Para uma verificação separada contra o serviço real, use:</p>
 <pre><code class="language-bash">dart run tool/smoke.dart</code></pre>
-<p>O comando consulta <code>01001-000</code> e confere São Paulo/SP. Ele depende da rede e da disponibilidade do ViaCEP e não faz parte da suíte determinística do CI. O build Web e a consulta pelo navegador foram validados; macOS debug e iOS sem assinatura também compilaram. Isso não equivale a teste em telefone físico. Android ainda depende de licenças aceitas pelo desenvolvedor; macOS release apresentou uma limitação de empacotamento nesta combinação de ferramentas.</p>
+<p>O comando consulta <code>01001-000</code> e confere São Paulo/SP. Ele depende da rede e da disponibilidade do ViaCEP e não faz parte da suíte determinística do CI. O build Web e a consulta pelo navegador foram validados; macOS debug e iOS sem assinatura também compilaram. Isso não equivale a teste em telefone físico. Android ainda depende de licenças aceitas pelo desenvolvedor. Com Flutter 3.50.0, o build macOS release e o build iOS sem assinatura passaram; a falha anterior de empacotamento macOS não se repetiu. Compilar não substitui a verificação de interação em cada plataforma.</p>
 <h2>Exercícios para continuar a aula</h2>
 <ol><li>Acrescente alternância entre temas claro e escuro usando <code>ThemeMode</code>. Verifique o contraste nos dois temas.</li><li>Adicione outro exemplo offline e um teste que confirme o endereço correto. Mantenha clara a diferença entre demonstração e consulta real.</li><li>Teste navegação com Tab, Enter e leitor de tela. Confira os valores do endereço, não apenas os títulos dos campos.</li><li>Escreva um teste em que a primeira busca termina depois da segunda e explique por que a geração impede o resultado antigo.</li><li>Se implementar histórico, defina uma ação de limpeza e teste a migração antes de alterar o formato armazenado.</li></ol>
 <p>Validação e tratamento de erro, antes propostos como desafios, agora fazem parte da implementação. Os componentes nativos de status e <code>SnackBar</code> atendem às mensagens desta aula. As antigas sugestões de <code>dynamic_theme</code>, <code>flushbar</code> e <code>share</code> não são dependências atuais do projeto.</p>

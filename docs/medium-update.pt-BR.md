@@ -14,7 +14,7 @@ Preserve o título “Consultando CEPs com Flutter”, o subtítulo “Notas de 
 
 ## Texto de atualização para inserir após a introdução
 
-Esta aula foi atualizada para Flutter 3.41.9 e Dart 3.11.5, com null safety e Material 3. Vamos consultar o ViaCEP sem chave de API, validar o CEP antes da requisição e apresentar um endereço legível. Também vamos tratar conexão indisponível, timeout, CEP inexistente e respostas inválidas. A consulta é enviada ao ViaCEP; o aplicativo não salva histórico nem endereços no dispositivo.
+Esta aula foi atualizada para Flutter 3.50.0 e Dart 3.14.0, com null safety e Material 3. Vamos consultar o ViaCEP sem chave de API, validar o CEP antes da requisição e apresentar um endereço legível. Também vamos tratar conexão indisponível, timeout, CEP inexistente e respostas inválidas. A consulta é enviada ao ViaCEP; o aplicativo não salva histórico nem endereços no dispositivo.
 
 ## Criando e executando o projeto
 
@@ -28,7 +28,7 @@ flutter pub get
 flutter run -d chrome
 ```
 
-A versão verificada é Flutter 3.41.9 com Dart 3.11.5. Para experimentar o exemplo local, sem fazer consultas externas, execute:
+A versão verificada é Flutter 3.50.0 com Dart 3.14.0. Para experimentar o exemplo local, sem fazer consultas externas, execute:
 
 ```sh
 flutter run -d chrome --dart-define=DEMO=true
@@ -60,7 +60,7 @@ Use HTTPS e mantenha o CEP da URL coerente com o retorno. O artigo antigo exibia
 
 ## Dependências e código completo atualizado
 
-Substitua os embeds correspondentes às seções Dependências, Classe ResultCep, Classe ViaCepService, Classe Principal e Classe HomePage pelos respectivos arquivos abaixo. As seções de Cep e SearchController são novas. A classe de modelo converte dados em memória; não existe persistência neste exemplo. A biblioteca `http` recebe um `Uri` e um cliente injetável, que é fechado pelo proprietário da aplicação.
+Substitua os embeds correspondentes às seções Dependências, Classe ResultCep, Classe ViaCepService, Classe Principal e Classe HomePage pelos respectivos arquivos abaixo. As seções de Cep e SearchController são novas. A classe de modelo converte dados em memória; não existe persistência neste exemplo. No Flutter 3.50, a interface importa `package:material_ui/material_ui.dart`; os delegates de localização vêm desse pacote. A biblioteca `http` recebe um `Uri` e um cliente injetável, que é fechado pelo proprietário da aplicação.
 
 ### `pubspec.yaml`
 
@@ -70,14 +70,13 @@ description: Accessible Brazilian postal code lookup with Flutter and ViaCEP.
 publish_to: none
 version: 2.0.0+2
 environment:
-  sdk: '>=3.11.0 <4.0.0'
-  flutter: '>=3.41.0'
+  sdk: '>=3.14.0 <4.0.0'
+  flutter: '>=3.50.0'
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations:
-    sdk: flutter
   http: ^1.6.0
+  material_ui: ^1.11.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -112,6 +111,7 @@ final class Cep {
 
 ```dart
 import 'dart:convert';
+
 import '../domain/cep.dart';
 
 /// Immutable validated response. Empty optional fields are legitimate in ViaCEP.
@@ -176,7 +176,9 @@ final class ResultCep {
 ```dart
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
+
 import '../domain/cep.dart';
 import '../models/result_cep.dart';
 
@@ -247,6 +249,7 @@ class ViaCepService implements AddressLookup {
 
 ```dart
 import 'package:flutter/services.dart';
+
 import '../domain/cep.dart';
 import '../models/result_cep.dart';
 import 'via_cep_service.dart';
@@ -269,6 +272,7 @@ final class DemoCepService implements AddressLookup {
 
 ```dart
 import 'package:flutter/foundation.dart';
+
 import '../domain/cep.dart';
 import '../models/result_cep.dart';
 import '../services/via_cep_service.dart';
@@ -346,9 +350,9 @@ class SearchController extends ChangeNotifier {
 ### `lib/main.dart`
 
 ```dart
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:http/http.dart' as http;
+
 import 'services/via_cep_service.dart';
 import 'services/demo_cep_service.dart';
 import 'state/search_controller.dart' as search;
@@ -412,8 +416,9 @@ class _HomeState extends State<_Home> {
 ### `lib/views/home_page.dart`
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+
 import '../models/result_cep.dart';
 import '../state/search_controller.dart' as search;
 
@@ -629,8 +634,7 @@ class _HomePageState extends State<HomePage> {
     search.SearchIdle() => const _StatusPanel(
       icon: Icons.location_on_outlined,
       title: 'Seu próximo destino começa aqui',
-      message:
-          'O endereço aparecerá aqui após a consulta.\nSe preferir, comece por um dos exemplos.',
+      message: 'O endereço aparecerá aqui após a consulta.\nSe preferir, comece por um dos exemplos.',
     ),
   };
 }
