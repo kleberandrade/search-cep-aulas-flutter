@@ -17,3 +17,11 @@ Updated and republished on 2026-11-17 at the original URL above. Title, subtitle
 Evidence: `published-cover.jpg`, `published-lesson.jpg`. Local application validation after checking all packages: analyze clean, 21 tests passed. All direct/development packages were current; Flutter 3.50.0 / Dart 3.14.0 now advance eight of the original nine outdated transitives; two latest versions remain blocked by exact official SDK pins. The article explains both constraints.
 
 The archived `../medium-update.pt-BR.md` is a complete technical reference; `article.pt-BR.html` is the didactic publication source.
+
+## App 2.0.1+3: tested overrides
+
+The teaching source now explains exact overrides for material_color_utilities 0.13.1 and test_api 0.7.15, how resolution differs from compatibility, which checks were executed and when overrides should be removed. It distinguishes app version/build from Flutter/Dart versions.
+
+## Editorial convention
+
+Every student-facing article must end with exactly **five app-improvement challenges**. Put credits/references before that final section. Each challenge should name a concrete feature and a checkable acceptance criterion. Do not append a closing paragraph after the challenges. This convention was explicitly requested by the author.

@@ -2,7 +2,7 @@
 <figure><img src="https://raw.githubusercontent.com/kleberandrade/search-cep-aulas-flutter/master/docs/medium/cover.png" alt="Capa: Consultando CEPs com Flutter. Envelope com símbolo Flutter, marcador de localização e mapa do Brasil em tons de verde. Subtítulo: Da validação ao endereço com ViaCEP."><figcaption>Ilustração de capa criada com auxílio de IA para esta atualização. As telas ao longo da aula são capturas reais do aplicativo.</figcaption></figure>
 <p>Como transformar oito números em um endereço legível? Nesta aula vamos consultar o ViaCEP com Flutter, validar a entrada antes de acessar a rede e apresentar o resultado em uma interface acessível. O objetivo é compreender cada responsabilidade, do campo de texto até a resposta HTTP, e aprender a lidar com os caminhos em que a consulta falha.</p>
 <p>O CEP — Código de Endereçamento Postal — tem oito algarismos. Ele pode identificar um logradouro, uma localidade ou uma unidade específica. Por isso, um retorno sem rua ou bairro não significa necessariamente um erro. Os zeros à esquerda também fazem parte do código: CEP é texto, não um número para fazer contas.</p>
-<p><strong>Atualização da aula, novembro de 2026:</strong> o projeto foi migrado para Flutter 3.50.0, Dart 3.14.0, null safety e Material 3. O título, a autoria e a finalidade desta nota de aula de 2019 foram mantidos. Os exemplos abaixo acompanham o código atual do repositório; os antigos componentes e capturas foram substituídos.</p>
+<p><strong>Atualização da aula, novembro de 2026:</strong> o aplicativo está na versão <code>2.0.1+3</code> e usa Flutter 3.50.0, Dart 3.14.0, null safety e Material 3. Os dois overrides descritos nesta aula foram adotados somente após testes e builds nesta combinação de versões. O título, a autoria e a finalidade desta nota de aula de 2019 foram mantidos. Os exemplos abaixo acompanham o código atual do repositório; os antigos componentes e capturas foram substituídos.</p>
 <h2>O que você vai aprender</h2>
 <ul><li>Validar e normalizar um CEP sem perder zeros à esquerda.</li><li>Fazer uma requisição HTTPS com um cliente HTTP que pode ser substituído nos testes.</li><li>Converter JSON em um endereço imutável e validar dados externos.</li><li>Distinguir carregamento, sucesso, entrada inválida, CEP inexistente e falha de conexão.</li><li>Impedir que uma resposta atrasada substitua uma pesquisa mais recente.</li><li>Testar a lógica e a interface usando exemplos controlados.</li></ul>
 <h2>1. Prepare o laboratório</h2>
@@ -20,7 +20,7 @@ flutter run -d chrome</code></pre>
 <pre><code class="language-yaml">name: search_cep
 description: Accessible Brazilian postal code lookup with Flutter and ViaCEP.
 publish_to: none
-version: 2.0.0+2
+version: 2.0.1+3
 environment:
   sdk: &#x27;&gt;=3.14.0 &lt;4.0.0&#x27;
   flutter: &#x27;&gt;=3.50.0&#x27;
@@ -33,6 +33,11 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+# Exact compatibility overrides validated with Flutter 3.50.0 / Dart 3.14.0.
+# Re-test and remove when the official SDK constraints allow these versions.
+dependency_overrides:
+  material_color_utilities: 0.13.1
+  test_api: 0.7.15
 flutter:
   uses-material-design: true
   assets:
@@ -42,7 +47,15 @@ flutter:
 flutter pub upgrade --major-versions
 flutter analyze
 flutter test</code></pre>
-<p>A atualização para Flutter 3.50.0 e Dart 3.14.0 permitiu avançar oito dos nove pacotes transitivos antes desatualizados. Sete chegaram à versão mais recente: clock 1.1.3, intl 0.20.3, matcher 0.12.20, meta 1.19.0, stack_trace 1.12.2, vector_math 2.4.4 e web 1.1.2. O test_api também avançou, de 0.7.10 para 0.7.14, mas a versão mais nova é 0.7.15. O SDK estável ainda fixa material_color_utilities em 0.13.0 e flutter_test fixa test_api em 0.7.14. Por isso, essas duas versões mais novas não são resolvíveis neste conjunto. Não alteramos o SDK nem usamos overrides para forçar a resolução. A coluna “Latest” do Pub mostra a versão publicada; “Resolvable” mostra o que pode ser usado com o conjunto instalado.</p>
+<h3>Por que existem dois overrides?</h3>
+<p>Ao migrar do SDK anterior para Flutter 3.50.0, oito dos nove pacotes transitivos avançaram de versão. Ainda havia duas restrições exatas no próprio SDK: <code>material_color_utilities: 0.13.0</code> e <code>test_api: 0.7.14</code>. As versões mais recentes são, respectivamente, <code>0.13.1</code> e <code>0.7.15</code>. Nesta versão do aplicativo, adotamos overrides exatos para essas duas versões após verificar a compatibilidade local e no CI.</p>
+<p><code>dependency_overrides</code> tem precedência sobre as restrições normais, inclusive as declaradas por dependências do SDK. Ele faz o Pub escolher a versão indicada; não demonstra, sozinho, que a troca é compatível. Por isso, o experimento foi primeiro colocado em <code>pubspec_overrides.yaml</code>, um arquivo local temporário. Depois de análise, 21 testes e builds Web, macOS release e iOS sem assinatura passarem, os overrides foram promovidos para o <code>pubspec.yaml</code> compartilhado.</p>
+<p>Os dois pacotes afetam partes diferentes do projeto. <code>material_color_utilities</code> participa do cálculo das cores Material; sua atualização exige verificar o tema e a apresentação real do app. <code>test_api</code> participa da infraestrutura dos testes, então a suíte precisa continuar descobrindo, executando e avaliando corretamente seus cenários. Testar somente se as dependências foram baixadas não cobre esses comportamentos.</p>
+<p>Com os overrides ativos, os nove pacotes antes apontados estão nas versões mais recentes verificadas nesta aula. Compare os dois diagnósticos abaixo: o segundo desconsidera os overrides apenas no cálculo do relatório e mostra por que o SDK ainda bloquearia essas versões. Ele não apaga o bloco do arquivo.</p>
+<pre><code class="language-bash">flutter pub outdated
+flutter pub outdated --no-dependency-overrides</code></pre>
+<p><strong>Como manter:</strong> conserve as versões exatas e o lockfile. Ao atualizar Flutter, Dart ou um override, repita análise, testes, builds e a conferência visual. Quando o SDK permitir essas versões sem override, remova o bloco, resolva novamente as dependências e valide o resultado. A aprovação desta combinação não garante compatibilidade com qualquer SDK futuro.</p>
+<p><strong>Versão do aplicativo:</strong> em <code>version: 2.0.1+3</code>, <code>2.0.1</code> é a versão de lançamento e <code>3</code> é o número do build. Esses números identificam o app; são diferentes de Flutter <code>3.50.0</code> e Dart <code>3.14.0</code>, que identificam as ferramentas usadas para compilá-lo.</p>
 <h2>3. API, HTTPS e JSON: o caminho da consulta</h2>
 <p>Uma API é uma interface pela qual programas trocam informações. Aqui o aplicativo envia uma requisição GET ao ViaCEP e recebe um documento JSON. JSON é o formato dos dados; o endereço na tela é a interpretação desses dados pelo nosso código.</p>
 <pre><code class="language-plaintext">https://viacep.com.br/ws/01001000/json/</code></pre>
@@ -258,7 +271,7 @@ class SearchController extends ChangeNotifier {
     ),
   };</code></pre>
 <p>O retorno é exibido em campos selecionáveis: CEP, logradouro, bairro, cidade/UF, complemento, DDD e IBGE, conforme o que o serviço informar. Os valores também possuem rótulos acessíveis, e as mudanças de estado são anunciadas pela semântica do Flutter. O botão Copiar endereço mostra uma confirmação; se a área de transferência falhar, o texto continua disponível para seleção.</p>
-<figure><img src="https://raw.githubusercontent.com/kleberandrade/search-cep-aulas-flutter/master/docs/screenshots/web-address.jpg" alt="Resultado real do CEP 01001-000: Praça da Sé, bairro Sé, São Paulo/SP, complemento lado ímpar, DDD 11 e IBGE 3550308. Botão Copiar endereço."><figcaption>Figura 3 — Consulta real de <code>01001-000</code>: endereço da Praça da Sé apresentado em campos legíveis, com confirmação de cópia.</figcaption></figure>
+<figure><img src="https://raw.githubusercontent.com/kleberandrade/search-cep-aulas-flutter/master/docs/screenshots/web-address.jpg" alt="Resultado real do CEP 01001-000: Praça da Sé, bairro Sé, São Paulo/SP, complemento lado ímpar, DDD 11 e IBGE 3550308. Botão Copiar endereço."><figcaption>Figura 3 — Consulta real de 01001-000: endereço da Praça da Sé apresentado em campos legíveis, com confirmação de cópia.</figcaption></figure>
 <p>Em telas largas os painéis ficam lado a lado. Em telas estreitas passam para uma coluna com rolagem. Não use largura fixa para todo o conteúdo: o mesmo formulário precisa funcionar quando a pessoa amplia a fonte ou utiliza uma tela menor.</p>
 <figure><img src="https://raw.githubusercontent.com/kleberandrade/search-cep-aulas-flutter/master/docs/screenshots/web-mobile-address.jpg" alt="Cartão de endereço da Praça da Sé em viewport estreita de 390 pixels, organizado em uma coluna com rolagem."><figcaption>Figura 4 — Captura real em viewport de 390 px: o cartão se reorganiza em uma coluna e permanece legível com rolagem.</figcaption></figure>
 <h2>9. Pratique mesmo sem internet</h2>
@@ -275,10 +288,15 @@ flutter build web</code></pre>
 <p>Para uma verificação separada contra o serviço real, use:</p>
 <pre><code class="language-bash">dart run tool/smoke.dart</code></pre>
 <p>O comando consulta <code>01001-000</code> e confere São Paulo/SP. Ele depende da rede e da disponibilidade do ViaCEP e não faz parte da suíte determinística do CI. O build Web e a consulta pelo navegador foram validados; macOS release e iOS sem assinatura também compilaram. Isso não equivale a teste em telefone físico. Android ainda depende de licenças aceitas pelo desenvolvedor. Com Flutter 3.50.0, o build macOS release e o build iOS sem assinatura passaram; a falha anterior de empacotamento macOS não se repetiu. Compilar não substitui a verificação de interação em cada plataforma.</p>
-<h2>Exercícios para continuar a aula</h2>
-<ol><li>Acrescente alternância entre temas claro e escuro usando <code>ThemeMode</code>. Verifique o contraste nos dois temas.</li><li>Adicione outro exemplo offline e um teste que confirme o endereço correto. Mantenha clara a diferença entre demonstração e consulta real.</li><li>Teste navegação com Tab, Enter e leitor de tela. Confira os valores do endereço, não apenas os títulos dos campos.</li><li>Escreva um teste em que a primeira busca termina depois da segunda e explique por que a geração impede o resultado antigo.</li><li>Se implementar histórico, defina uma ação de limpeza e teste a migração antes de alterar o formato armazenado.</li></ol>
-<p>Validação e tratamento de erro, antes propostos como desafios, agora fazem parte da implementação. Os componentes nativos de status e <code>SnackBar</code> atendem às mensagens desta aula. As antigas sugestões de <code>dynamic_theme</code>, <code>flushbar</code> e <code>share</code> não são dependências atuais do projeto.</p>
 <h2>Código, créditos e referências</h2>
 <p>Código completo e instruções de execução: <a href="https://github.com/kleberandrade/search-cep-aulas-flutter">search-cep-aulas-flutter</a>. Projeto de Kleber de Oliveira Andrade, publicado originalmente em 2019, sob licença MIT. O <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/docs/modernization-log.md">log de modernização</a> registra as verificações e limitações. A capa é uma ilustração editorial criada com auxílio de IA; as figuras do aplicativo são capturas reais, preservadas no repositório.</p>
 <ul><li><a href="https://viacep.com.br/">Documentação do ViaCEP</a>.</li><li><a href="https://pub.dev/packages/http">Pacote http</a>.</li><li><a href="https://docs.flutter.dev/cookbook/forms">Formulários em Flutter</a> e <a href="https://docs.flutter.dev/cookbook/design/themes">temas</a>.</li><li><a href="https://app.quicktype.io/">Quicktype</a>, referência original para explorar a geração de modelos; sempre revise os tipos e as validações geradas.</li><li><a href="https://medium.com/@nitishk72/form-validation-in-flutter-d762fbc9212c">Artigo de validação de formulários de @nitishk72</a>, referência histórica de terceiro, não alterada nesta atualização.</li><li><a href="https://www.youtube.com/watch?v=qAzxZJ8NRwI">Vídeo sobre exceções</a> e <a href="https://rxlabz.github.io/panache/">Panache</a>, referências do material original.</li><li><a href="https://github.com/public-apis/public-apis">Coletânea de APIs públicas</a>, para explorar novas integrações como exercício.</li></ul>
 <p>Ao final, você não apenas consulta um CEP: consegue explicar onde a entrada é validada, como a rede é isolada, por que os estados importam e como provar que os principais caminhos funcionam. Um forte abraço e bons estudos!</p>
+<h2>5 desafios de melhoria para desenvolver</h2>
+<ol>
+<li><strong>Alternância de temas.</strong> Adicione um controle para escolher tema claro, escuro ou do sistema com <code>ThemeMode</code>. Critério de entrega: a troca funciona por teclado, mantém o resultado visível e apresenta texto legível nos três modos.</li>
+<li><strong>Laboratório offline ampliado.</strong> Acrescente três fixtures, incluindo um endereço sem logradouro ou bairro, e permita escolher os exemplos no modo de demonstração. Critério de entrega: cada exemplo tem um teste que confere seus campos e a tela identifica claramente que são dados locais.</li>
+<li><strong>Histórico local com limpeza.</strong> Armazene os cinco últimos CEPs consultados com sucesso, sem duplicatas, e ofereça uma ação para apagar o histórico. Critério de entrega: os itens continuam disponíveis após reiniciar o app, a limpeza funciona e existe um teste de compatibilidade para uma mudança no formato salvo.</li>
+<li><strong>Cópia e compartilhamento completos.</strong> Inclua o complemento, quando houver, no texto copiado e implemente compartilhamento nas plataformas escolhidas. Critério de entrega: campos vazios não criam linhas desnecessárias, o conteúdo compartilhado corresponde ao endereço e o usuário recebe uma alternativa quando a ação não estiver disponível.</li>
+<li><strong>Busca automática sem respostas antigas.</strong> Consulte após 400 ms sem digitação, somente quando houver um CEP válido, preservando a geração de cada consulta. Critério de entrega: digitação rápida não dispara consultas incompletas e um teste com respostas fora de ordem prova que o resultado antigo não substitui o novo.</li>
+</ol>

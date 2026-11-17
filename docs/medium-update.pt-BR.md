@@ -14,7 +14,7 @@ Preserve o título “Consultando CEPs com Flutter”, o subtítulo “Notas de 
 
 ## Texto de atualização para inserir após a introdução
 
-Esta aula foi atualizada para Flutter 3.50.0 e Dart 3.14.0, com null safety e Material 3. Vamos consultar o ViaCEP sem chave de API, validar o CEP antes da requisição e apresentar um endereço legível. Também vamos tratar conexão indisponível, timeout, CEP inexistente e respostas inválidas. A consulta é enviada ao ViaCEP; o aplicativo não salva histórico nem endereços no dispositivo.
+Esta aula acompanha o aplicativo 2.0.1+3, com Flutter 3.50.0 e Dart 3.14.0, com null safety e Material 3. Vamos consultar o ViaCEP sem chave de API, validar o CEP antes da requisição e apresentar um endereço legível. Também vamos tratar conexão indisponível, timeout, CEP inexistente e respostas inválidas. A consulta é enviada ao ViaCEP; o aplicativo não salva histórico nem endereços no dispositivo.
 
 ## Criando e executando o projeto
 
@@ -68,7 +68,7 @@ Substitua os embeds correspondentes às seções Dependências, Classe ResultCep
 name: search_cep
 description: Accessible Brazilian postal code lookup with Flutter and ViaCEP.
 publish_to: none
-version: 2.0.0+2
+version: 2.0.1+3
 environment:
   sdk: '>=3.14.0 <4.0.0'
   flutter: '>=3.50.0'
@@ -81,6 +81,11 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+# Exact compatibility overrides validated with Flutter 3.50.0 / Dart 3.14.0.
+# Re-test and remove when the official SDK constraints allow these versions.
+dependency_overrides:
+  material_color_utilities: 0.13.1
+  test_api: 0.7.15
 flutter:
   uses-material-design: true
   assets:
@@ -818,12 +823,18 @@ Os testes de unidade usam fixtures locais e `MockClient`: resposta válida, CEP 
 
 Para Android, é preciso configurar o SDK e aceitar pessoalmente as licenças necessárias. Não aceite termos automaticamente. Os identificadores originais de Android/iOS foram preservados. Nenhum armazenamento mudou, pois a versão anterior também não persistia dados. A API Dart interna mudou de `ViaCepService.fetchCep(cep: ...)` estático para uma instância que recebe `http.Client` e consulta um `Cep` validado.
 
-## Desafios atualizados
+## Overrides verificados
 
-1. Adicionar alternância de temas com `ThemeMode` e `ThemeData`, sem depender do antigo `dynamic_theme`.
-2. Acrescentar testes para leitor de tela e navegação por teclado.
-3. Criar mais exemplos locais, identificando claramente dados de demonstração.
-4. Implementar compartilhamento nativo apenas se necessário, avaliando a versão e as plataformas suportadas por uma biblioteca mantida.
-5. Se criar histórico, definir consentimento, limpeza e migração dos dados e testar compatibilidade antes de persistir endereços.
+A versão 2.0.1+3 compartilha os overrides exatos material_color_utilities 0.13.1 e test_api 0.7.15 após o experimento passar em análise, 21 testes e builds Web/macOS release/iOS sem assinatura. Eles substituem as restrições do SDK; a compatibilidade observada vale para a combinação testada. Compare `flutter pub outdated` e `flutter pub outdated --no-dependency-overrides` e revalide a cada atualização. A versão didática publicada explica a manutenção e a remoção futura desses overrides.
 
-Validação de CEP e tratamento de falhas agora fazem parte da aula, em vez de ficar apenas como desafios. Mensagens inline e `SnackBar` nativo dispensam o antigo `Flushbar` nesta implementação. Preserve o link de validação de @nitishk72 como referência histórica de terceiro, sem editar o artigo dele. Preserve a lista de APIs como referências do autor; não indique que todos os sites foram revalidados nesta atualização.
+## Cinco desafios finais
+
+Alternância de temas. Adicione um controle para escolher tema claro, escuro ou do sistema com ThemeMode. Critério de entrega: a troca funciona por teclado, mantém o resultado visível e apresenta texto legível nos três modos.
+
+Laboratório offline ampliado. Acrescente três fixtures, incluindo um endereço sem logradouro ou bairro, e permita escolher os exemplos no modo de demonstração. Critério de entrega: cada exemplo tem um teste que confere seus campos e a tela identifica claramente que são dados locais.
+
+Histórico local com limpeza. Armazene os cinco últimos CEPs consultados com sucesso, sem duplicatas, e ofereça uma ação para apagar o histórico. Critério de entrega: os itens continuam disponíveis após reiniciar o app, a limpeza funciona e existe um teste de compatibilidade para uma mudança no formato salvo.
+
+Cópia e compartilhamento completos. Inclua o complemento, quando houver, no texto copiado e implemente compartilhamento nas plataformas escolhidas. Critério de entrega: campos vazios não criam linhas desnecessárias, o conteúdo compartilhado corresponde ao endereço e o usuário recebe uma alternativa quando a ação não estiver disponível.
+
+Busca automática sem respostas antigas. Consulte após 400 ms sem digitação, somente quando houver um CEP válido, preservando a geração de cada consulta. Critério de entrega: digitação rápida não dispara consultas incompletas e um teste com respostas fora de ordem prova que o resultado antigo não substitui o novo.

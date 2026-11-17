@@ -2,6 +2,7 @@
 
 [![Flutter 3.50.0](https://img.shields.io/badge/Flutter-3.50.0-02569B)](https://docs.flutter.dev/)
 [![Dart 3.14.0](https://img.shields.io/badge/Dart-3.14.0-0175C2)](https://dart.dev/)
+[![App 2.0.1 build 3](https://img.shields.io/badge/App-2.0.1%2B3-14695C)](pubspec.yaml)
 [![License MIT](https://img.shields.io/badge/License-MIT-555555)](LICENSE)
 
 A Flutter classroom app for looking up Brazilian postal codes through [ViaCEP](https://viacep.com.br/). It validates input, handles service failures, and presents selectable address details in a responsive Material 3 interface. No API key, Firebase project, account, or database is needed.
@@ -86,7 +87,16 @@ Dart 2 nullable mutable fields were replaced with Dart 3 null-safe immutable bou
 
 Android now uses the Flutter plugin DSL, Kotlin 2.2.20, AGP 8.11.1, Gradle 8.14 and Java 17 source compatibility; SDK levels follow the installed Flutter defaults. INTERNET permission is present in the release manifest. Android retains `com.example.search_cep` and iOS retains `com.example.searchCep`; configure signing and a production identifier before distributing your own app. Local SDK paths and generated registrants are no longer tracked.
 
-The Flutter 3.50 upgrade advanced eight of the nine previously outdated transitives: clock 1.1.3, intl 0.20.3, matcher 0.12.20, meta 1.19.0, stack_trace 1.12.2, test_api 0.7.14, vector_math 2.4.4 and web 1.1.2. Seven reached the latest available version. Two newer versions remain blocked by exact constraints in the official stable SDK: `material_color_utilities` is pinned to 0.13.0 (latest 0.13.1), and `flutter_test` pins `test_api` to 0.7.14 (latest 0.7.15). No SDK edits or dependency overrides are used. See `docs/dependencies-flutter-3.50.json` for the actual resolver report.
+App version **2.0.1+3** adopts exact `dependency_overrides` for `material_color_utilities: 0.13.1` and `test_api: 0.7.15`. The official Flutter 3.50 SDK otherwise pins 0.13.0 and 0.7.14 respectively. Both overrides were first tested locally, then promoted after clean analysis, all 21 tests, Web/macOS release/iOS unsigned builds and real Web interaction checks. They bypass the upstream constraints; this records compatibility observed for this app and toolchain, not an upstream guarantee for future SDKs. The SDK source was not edited.
+
+All nine previously outdated transitives are now at the latest versions checked for this release. `docs/dependencies-flutter-3.50.json` is the resolver report with overrides; `docs/dependencies-without-overrides.json` shows the remaining upstream constraints without them. Compare with:
+
+```sh
+flutter pub outdated
+flutter pub outdated --no-dependency-overrides
+```
+
+Keep the overrides exact and retain the lockfile. Re-run the checks and inspect the UI whenever upgrading the SDK or override versions. Remove an override once upstream constraints permit the tested version, then resolve and validate again. Temporary local experiments in `pubspec_overrides.yaml` are ignored by Git; shared decisions belong in `pubspec.yaml`.
 
 The iOS runner uses the modern Flutter scene lifecycle; its minimum target is iOS 15. macOS minimum is 12 to match the available Xcode toolchain. Web and macOS runners were added from the installed Flutter templates. Original iOS artwork and MIT attribution are preserved. Android licenses must be accepted by the developer, never by automation. No persistent store existed before or after this migration, so no data migration is needed.
 
