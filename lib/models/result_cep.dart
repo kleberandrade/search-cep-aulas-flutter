@@ -1,53 +1,58 @@
 import 'dart:convert';
+import '../domain/cep.dart';
 
-class ResultCep {
-  String cep;
-  String logradouro;
-  String complemento;
-  String bairro;
-  String localidade;
-  String uf;
-  String unidade;
-  String ibge;
-  String gia;
+/// Immutable validated response. Empty optional fields are legitimate in ViaCEP.
+final class ResultCep {
+  ResultCep._(this._fields);
+  final Map<String, String> _fields;
 
-  ResultCep({
-    this.cep,
-    this.logradouro,
-    this.complemento,
-    this.bairro,
-    this.localidade,
-    this.uf,
-    this.unidade,
-    this.ibge,
-    this.gia,
-  });
+  factory ResultCep.fromJson(String source) {
+    final value = jsonDecode(source);
+    if (value is! Map<String, dynamic>) {
+      throw const FormatException('Expected an address object');
+    }
+    return ResultCep.fromMap(value);
+  }
 
-  factory ResultCep.fromJson(String str) => ResultCep.fromMap(json.decode(str));
+  factory ResultCep.fromMap(Map<String, dynamic> map) {
+    final fields = <String, String>{};
+    for (final key in [
+      'cep',
+      'logradouro',
+      'complemento',
+      'bairro',
+      'localidade',
+      'uf',
+      'unidade',
+      'ibge',
+      'gia',
+      'ddd',
+      'siafi',
+      'estado',
+      'regiao',
+    ]) {
+      final value = map[key];
+      if (value != null && value is! String) {
+        throw FormatException('Invalid $key');
+      }
+      fields[key] = (value as String? ?? '').trim();
+    }
+    fields['cep'] = Cep.parse(fields['cep']!).formatted;
+    if (fields['localidade']!.isEmpty ||
+        !RegExp(r'^[A-Z]{2}$').hasMatch(fields['uf']!)) {
+      throw const FormatException('Missing city or state');
+    }
+    return ResultCep._(Map.unmodifiable(fields));
+  }
 
-  String toJson() => json.encode(toMap());
-
-  factory ResultCep.fromMap(Map<String, dynamic> json) => ResultCep(
-        cep: json["cep"] == null ? null : json["cep"],
-        logradouro: json["logradouro"] == null ? null : json["logradouro"],
-        complemento: json["complemento"] == null ? null : json["complemento"],
-        bairro: json["bairro"] == null ? null : json["bairro"],
-        localidade: json["localidade"] == null ? null : json["localidade"],
-        uf: json["uf"] == null ? null : json["uf"],
-        unidade: json["unidade"] == null ? null : json["unidade"],
-        ibge: json["ibge"] == null ? null : json["ibge"],
-        gia: json["gia"] == null ? null : json["gia"],
-      );
-
-  Map<String, dynamic> toMap() => {
-        "cep": cep == null ? null : cep,
-        "logradouro": logradouro == null ? null : logradouro,
-        "complemento": complemento == null ? null : complemento,
-        "bairro": bairro == null ? null : bairro,
-        "localidade": localidade == null ? null : localidade,
-        "uf": uf == null ? null : uf,
-        "unidade": unidade == null ? null : unidade,
-        "ibge": ibge == null ? null : ibge,
-        "gia": gia == null ? null : gia,
-      };
+  String get cep => _fields['cep']!;
+  String get logradouro => _fields['logradouro']!;
+  String get complemento => _fields['complemento']!;
+  String get bairro => _fields['bairro']!;
+  String get localidade => _fields['localidade']!;
+  String get uf => _fields['uf']!;
+  String get ibge => _fields['ibge']!;
+  String get ddd => _fields['ddd']!;
+  Map<String, String> toMap() => Map.of(_fields);
+  String toJson() => jsonEncode(_fields);
 }
