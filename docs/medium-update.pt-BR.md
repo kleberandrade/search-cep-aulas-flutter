@@ -6,11 +6,11 @@ Autor: Kleber Andrade. Publicação: Flutter — Comunidade BR. Idioma mantido: 
 
 ## Situação editorial
 
-Artigo aberto e lido no Chrome em 17/11/2026, incluindo a estrutura de aula, exemplo da API, classes e desafios. A página mostra “Sign in”, “Sign up” e “Unknown user”, sem ação editorial. Não há sessão autenticada com permissão de edição. Nada foi publicado no Medium. Esta revisão fica pronta para aplicar ao artigo existente, preservando URL, título, autoria e publicação. Nenhuma newsletter deve ser enviada. O artigo de @nitishk72 é uma referência de terceiros e não foi alterado.
+Na primeira tentativa em 17/11/2026, a sessão estava desconectada e este documento foi preparado como referência técnica. Na continuação do trabalho, a conta do autor ficou acessível: o artigo original foi revisado e republicado pelo fluxo normal do Medium em 17/11/2026, preservando título, autoria, publicação e URL. A capa foi substituída, quatro capturas reais foram inseridas, todas as imagens receberam legendas e texto alternativo, e a aula ganhou explicações progressivas, checkpoints e exercícios. A versão didática final está em `docs/medium/article.pt-BR.html`; este arquivo conserva os trechos completos como referência técnica. Nenhuma newsletter foi enviada. O artigo de @nitishk72 não foi alterado.
 
 ## Aplicação ao artigo existente
 
-Preserve o título “Consultando CEPs com Flutter”, o subtítulo “Notas de aula do prof. Kleber de Oliveira Andrade”, a introdução conceitual sobre CEP, os créditos e as referências didáticas. Substitua os trechos de implementação e os embeds antigos pelos blocos abaixo. Troque a imagem antiga do resultado pela captura real em `docs/screenshots/web-address.jpg` depois da validação do navegador. Os blocos de código deste documento são extraídos dos arquivos finais do projeto; não use os antigos exemplos com `RaisedButton`, `http.get(String)` ou campos não inicializados.
+Preserve o título “Consultando CEPs com Flutter”, o subtítulo “Notas de aula do prof. Kleber de Oliveira Andrade”, a introdução conceitual sobre CEP, os créditos e as referências didáticas. Os trechos de implementação e embeds antigos foram substituídos na publicação pela versão didática. A captura real em `docs/screenshots/web-address.jpg` foi incluída após a validação do navegador. Os blocos de código deste documento são extraídos dos arquivos finais do projeto; não use os antigos exemplos com `RaisedButton`, `http.get(String)` ou campos não inicializados.
 
 ## Texto de atualização para inserir após a introdução
 

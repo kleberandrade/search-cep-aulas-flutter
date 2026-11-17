@@ -79,7 +79,7 @@ The iOS runner uses the modern Flutter scene lifecycle; its minimum target is iO
 
 ## Classroom material and credits
 
-Original tutorial by **Kleber de Oliveira Andrade**: [Consultando CEPs com Flutter](https://medium.com/flutter-comunidade-br/consultando-ceps-com-flutter-a395b86ce34a), originally linked as [bit.ly/2kcGFQh](http://bit.ly/2kcGFQh). The article was opened and read during modernization. [Prepared Portuguese revision](docs/medium-update.pt-BR.md) records its editorial access status and contains final matching source excerpts.
+Original tutorial by **Kleber de Oliveira Andrade**: [Consultando CEPs com Flutter](https://medium.com/flutter-comunidade-br/consultando-ceps-com-flutter-a395b86ce34a), originally linked as [bit.ly/2kcGFQh](http://bit.ly/2kcGFQh). The original article was updated and republished in Portuguese on 2026-11-17, preserving its URL, title and authorship. It now includes a new cover, four actual application screenshots with captions/alternative text, progressive explanations, current source excerpts, checkpoints and exercises. See the [published teaching source and assets](docs/medium/README.md) and the [technical reference](docs/medium-update.pt-BR.md).
 
 The original [form validation article by @nitishk72](https://medium.com/@nitishk72/form-validation-in-flutter-d762fbc9212c) remains a third-party historical reference. It was not edited. Useful original learning references: [themes](https://docs.flutter.dev/cookbook/design/themes), [forms](https://docs.flutter.dev/cookbook/forms), [async exceptions video](https://www.youtube.com/watch?v=qAzxZJ8NRwI), [Panache theme editor](https://rxlabz.github.io/panache/).
 

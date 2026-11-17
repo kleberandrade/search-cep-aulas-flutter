@@ -13,7 +13,7 @@ Date: 2026-11-17 (America/Sao_Paulo).
 7. Ran the real ViaCEP smoke script separately from mocks. Opened the compiled Web app in Chrome, enabled accessibility and exercised invalid input and Enter-to-search against ViaCEP. Captured real desktop and 390px responsive screenshots; no mockup was used. Narrow layout was scrolled to verify the address card.
 8. Updated the English README with verified commands, architecture/glossary, migration details, demo controls and limitations. Added a deterministic Linux CI workflow for formatting, analyze, tests and Web build. Badges describe real SDK versions/license, without invented coverage or success claims.
 9. Updated GitHub About in the authenticated browser and verified the saved description. Preserved and checked five relevant topics: `dart`, `education`, `flutter`, `postal-code`, `viacep`. Evidence: `docs/screenshots/github-about.jpg`.
-10. Resolved http://bit.ly/2kcGFQh to the author's actual Medium article, opened/read it in this project's own tab, including class sections and challenges. Detected signed-out state (“Sign in”, “Sign up”, “Unknown user”) and no editorial access. Prepared `docs/medium-update.pt-BR.md` with concrete replacement sections and exact final code. No Medium publication occurred; no third-party article was edited and no subscriber communication was sent.
+10. Resolved http://bit.ly/2kcGFQh to the author's actual Medium article, opened/read it in this project's own tab, including class sections and challenges. Detected signed-out state (“Sign in”, “Sign up”, “Unknown user”) and no editorial access. Prepared `docs/medium-update.pt-BR.md` with concrete replacement sections and exact final code. No Medium publication occurred during that initial signed-out attempt; the authenticated follow-up and verified publication are recorded below. No third-party article was edited and no subscriber communication was sent.
 
 ## Verification
 
@@ -28,7 +28,7 @@ Date: 2026-11-17 (America/Sao_Paulo).
 
 ## Remaining limits
 
-No screen-reader hardware test, physical phone test, Android certification, production signing, package publication or deployment. Public service availability and clipboard permission depend on the environment. The macOS release toolchain failure remains distinct from the successful debug build. Medium requires an authenticated author/editor session before applying the prepared revision to the existing URL.
+No screen-reader hardware test, physical phone test, Android certification, production signing, package publication or deployment. Public service availability and clipboard permission depend on the environment. The macOS release toolchain failure remains distinct from the successful debug build. Medium author/editor access was restored on follow-up, and the revision was published to the existing URL as recorded below.
 
 ## Final verification record
 
@@ -47,3 +47,9 @@ No screen-reader hardware test, physical phone test, Android certification, prod
 - Rechecked package updates with `flutter pub outdated --json`, `flutter pub upgrade --major-versions`, and `flutter pub outdated`. All direct/development packages are current and no manifest/lockfile changes were needed. Nine transitives have newer upstream releases but cannot be resolved with this pinned SDK/dependency graph; no overrides or global SDK update were applied.
 - Reopened the original Medium article in its own tab. The account is now authenticated as Kleber Andrade and the author-only “Edit story” action is available. Opened the editor at the existing article identity; the initial signed-out limitation no longer applies.
 - Prepared `docs/medium/article.pt-BR.html`: a progressive Portuguese lesson with learning objectives, ten explained steps, checkpoints, actual source excerpts, controlled/offline practice, validation guidance and exercises. Prepared an original AI-assisted editorial cover at `docs/medium/cover.png` and captions for four real app screenshots. Publication verification follows after applying the revision.
+
+- Re-ran `flutter analyze` (no issues) and the complete deterministic suite (21 passed) after the package audit. No application-code or dependency changes were necessary.
+- Applied the Portuguese teaching revision in the original author editor. Preserved the original title, subtitle, author, publication, article ID and September 2019 publication identity. Imported the cover and four real application captures into Medium's image hosting; all five received captions and descriptive alternative text.
+- Checked all 13 imported code blocks against the authored source excerpts: all matched exactly (apart from intentionally omitted empty source lines). Corrected syntax highlighting to Bash/YAML/JSON/Dart/plain text through the editor UI. Wrapped CEP examples in inline code to preserve copyable ASCII hyphens.
+- Clicked the normal “Save and publish” action. Verified the returned public page at `https://medium.com/flutter-comunidade-br/consultando-ceps-com-flutter-a395b86ce34a?postPublishedType=repub`, its updated teaching sections, all five loaded images, captions and 13 code blocks. The `og:image` now points to the new cover (`0*it0o7XiigA8k_T4I.png`), confirming the sharing cover changed too. No subscriber email/newsletter action was used.
+- Publication evidence: `docs/medium/published-cover.jpg` and `docs/medium/published-lesson.jpg`. The article source, cover and package audit are kept in the repository. No content from other authors was edited.
