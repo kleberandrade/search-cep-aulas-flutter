@@ -41,3 +41,9 @@ No screen-reader hardware test, physical phone test, Android certification, prod
 - `flutter build ios --no-codesign`: **passed**, produced `build/ios/iphoneos/Runner.app` (15.7 MB). This is compilation without signing, not a physical-device or simulator interaction test.
 - Final Web build after accessibility changes: **passed**. Reloaded the compiled app, performed a new live lookup, and verified CEP, street, district, city/state, complement, DDD and IBGE are now exposed in the browser accessibility tree. Clicked Copy and observed “Endereço copiado.” Updated `web-address.jpg` from this final running version.
 - Final browser deliverable: local Web preview at `http://127.0.0.1:8766/`. Responsive screenshots are retained under `docs/screenshots/`.
+
+## Follow-up: package audit and didactic Medium revision
+
+- Rechecked package updates with `flutter pub outdated --json`, `flutter pub upgrade --major-versions`, and `flutter pub outdated`. All direct/development packages are current and no manifest/lockfile changes were needed. Nine transitives have newer upstream releases but cannot be resolved with this pinned SDK/dependency graph; no overrides or global SDK update were applied.
+- Reopened the original Medium article in its own tab. The account is now authenticated as Kleber Andrade and the author-only “Edit story” action is available. Opened the editor at the existing article identity; the initial signed-out limitation no longer applies.
+- Prepared `docs/medium/article.pt-BR.html`: a progressive Portuguese lesson with learning objectives, ten explained steps, checkpoints, actual source excerpts, controlled/offline practice, validation guidance and exercises. Prepared an original AI-assisted editorial cover at `docs/medium/cover.png` and captions for four real app screenshots. Publication verification follows after applying the revision.

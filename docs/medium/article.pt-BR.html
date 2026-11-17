@@ -1,0 +1,304 @@
+<h1>Consultando CEPs com Flutter</h1><h2>Notas de aula do prof. Kleber de Oliveira Andrade</h2>
+<figure><img src="https://raw.githubusercontent.com/kleberandrade/search-cep-aulas-flutter/master/docs/medium/cover.png" alt="Ilustração de capa criada com auxílio de IA para esta atualização. As telas ao longo da aula são capturas reais do aplicativo."><figcaption>Ilustração de capa criada com auxílio de IA para esta atualização. As telas ao longo da aula são capturas reais do aplicativo.</figcaption></figure>
+<p>Como transformar oito números em um endereço legível? Nesta aula vamos consultar o ViaCEP com Flutter, validar a entrada antes de acessar a rede e apresentar o resultado em uma interface acessível. O objetivo é compreender cada responsabilidade, do campo de texto até a resposta HTTP, e aprender a lidar com os caminhos em que a consulta falha.</p>
+<p>O CEP — Código de Endereçamento Postal — tem oito algarismos. Ele pode identificar um logradouro, uma localidade ou uma unidade específica. Por isso, um retorno sem rua ou bairro não significa necessariamente um erro. Os zeros à esquerda também fazem parte do código: CEP é texto, não um número para fazer contas.</p>
+<p><strong>Atualização da aula, novembro de 2026:</strong> o projeto foi migrado para Flutter 3.41.9, Dart 3.11.5, null safety e Material 3. O título, a autoria e a finalidade desta nota de aula de 2019 foram mantidos. Os exemplos abaixo acompanham o código atual do repositório; os antigos componentes e capturas foram substituídos.</p>
+<h2>O que você vai aprender</h2>
+<ul><li>Validar e normalizar um CEP sem perder zeros à esquerda.</li><li>Fazer uma requisição HTTPS com um cliente HTTP que pode ser substituído nos testes.</li><li>Converter JSON em um endereço imutável e validar dados externos.</li><li>Distinguir carregamento, sucesso, entrada inválida, CEP inexistente e falha de conexão.</li><li>Impedir que uma resposta atrasada substitua uma pesquisa mais recente.</li><li>Testar a lógica e a interface usando exemplos controlados.</li></ul>
+<h2>1. Prepare o laboratório</h2>
+<p>Você precisa conhecer classes, funções e widgets básicos do Flutter. Instale Flutter 3.41.9 stable com o Dart 3.11.5 que acompanha essa versão e tenha Chrome disponível. Nesta aula usaremos a Web para facilitar a experimentação; não é necessário configurar um emulador ou obter uma chave de API.</p>
+<p>Clone a versão completa para executar o laboratório. Os blocos a seguir analisam partes do projeto, não substituem todos os arquivos de um aplicativo criado do zero.</p>
+<pre>git clone https://github.com/kleberandrade/search-cep-aulas-flutter.git
+cd search-cep-aulas-flutter
+flutter --version
+flutter pub get
+flutter run -d chrome</pre>
+<p><strong>Checkpoint:</strong> a tela deve mostrar o campo CEP, o botão “Buscar endereço” e um painel aguardando a primeira consulta. Se o Flutter não encontrar Chrome, verifique os dispositivos com <code>flutter devices</code>.</p>
+<figure><img src="https://raw.githubusercontent.com/kleberandrade/search-cep-aulas-flutter/master/docs/screenshots/web-empty.jpg" alt="Figura 1 — Estado inicial real: o formulário explica o formato aceito e o painel informa onde aparecerá o resultado."><figcaption>Figura 1 — Estado inicial real: o formulário explica o formato aceito e o painel informa onde aparecerá o resultado.</figcaption></figure>
+<h2>2. Entenda as dependências</h2>
+<p>O <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/pubspec.yaml">pubspec.yaml</a> declara <code>http: ^1.6.0</code> para as requisições e <code>flutter_lints: ^6.0.0</code> para análise estática. <code>flutter_localizations</code> e <code>flutter_test</code> vêm do SDK. O projeto não precisa de Firebase, cadastro nem banco de dados.</p>
+<pre>name: search_cep
+description: Accessible Brazilian postal code lookup with Flutter and ViaCEP.
+publish_to: none
+version: 2.0.0+2
+environment:
+  sdk: &#x27;&gt;=3.11.0 &lt;4.0.0&#x27;
+  flutter: &#x27;&gt;=3.41.0&#x27;
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  http: ^1.6.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/sao_paulo.json</pre>
+<p>O símbolo <code>^</code> permite atualizações compatíveis dentro da faixa do pacote. O <code>pubspec.lock</code> registra as versões resolvidas para reproduzir a instalação. Para conferir atualizações, execute os comandos abaixo; revise os resultados e rode os testes depois de qualquer mudança.</p>
+<pre>flutter pub outdated
+flutter pub upgrade --major-versions
+flutter analyze
+flutter test</pre>
+<p>Na verificação desta atualização, todas as dependências diretas e de desenvolvimento já estavam atualizadas. Nove dependências transitivas têm versões mais novas, mas continuam fixadas pelas restrições compatíveis com este SDK. A versão “Latest” exibida pelo Pub não significa, por si só, que ela pode ser usada com o Flutter instalado. Mantenha o conjunto coerente ao atualizar o SDK.</p>
+<h2>3. API, HTTPS e JSON: o caminho da consulta</h2>
+<p>Uma API é uma interface pela qual programas trocam informações. Aqui o aplicativo envia uma requisição GET ao ViaCEP e recebe um documento JSON. JSON é o formato dos dados; o endereço na tela é a interpretação desses dados pelo nosso código.</p>
+<pre>https://viacep.com.br/ws/01001000/json/</pre>
+<p>Observe que a URL usa somente os oito dígitos. O exemplo desta aula corresponde ao CEP 01001-000, em São Paulo. No artigo antigo o rótulo do link e o CEP do destino não coincidiam; agora usamos um único exemplo coerente.</p>
+<pre>{&quot;cep&quot;:&quot;01001-000&quot;,&quot;logradouro&quot;:&quot;Praça da Sé&quot;,&quot;complemento&quot;:&quot;lado ímpar&quot;,&quot;bairro&quot;:&quot;Sé&quot;,&quot;localidade&quot;:&quot;São Paulo&quot;,&quot;uf&quot;:&quot;SP&quot;,&quot;unidade&quot;:&quot;&quot;,&quot;ibge&quot;:&quot;3550308&quot;,&quot;gia&quot;:&quot;1004&quot;,&quot;ddd&quot;:&quot;11&quot;,&quot;siafi&quot;:&quot;7107&quot;}</pre>
+<p>Campos como complemento, bairro ou logradouro podem estar vazios em outras respostas. Um CEP bem formado também pode não existir: nesse caso o serviço pode responder com HTTP 200 e <code>{"erro": true}</code>. Portanto, precisamos verificar tanto o status HTTP quanto o conteúdo recebido. Não confunda “requisição atendida” com “endereço encontrado”.</p>
+<h2>4. Valide na entrada: a classe Cep</h2>
+<p>A regra fica em um único lugar, <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/lib/domain/cep.dart">lib/domain/cep.dart</a>. <code>Cep.parse</code> aceita oito dígitos ou a máscara 00000-000 e remove espaços apenas nas extremidades. Letras, pontuação inesperada e comprimentos incorretos geram <code>FormatException</code> antes de qualquer chamada à rede.</p>
+<pre>/// Brazilian postal code: eight ASCII digits; leading zeros are significant.
+final class Cep {
+  const Cep._(this.digits);
+  final String digits;
+
+  factory Cep.parse(String input) {
+    final value = input.trim();
+    if (!RegExp(r&#x27;^[0-9]{5}-?[0-9]{3}$&#x27;).hasMatch(value)) {
+      throw const FormatException(&#x27;Informe um CEP com 8 dígitos.&#x27;);
+    }
+    return Cep._(value.replaceAll(&#x27;-&#x27;, &#x27;&#x27;));
+  }
+
+  String get formatted =&gt; &#x27;${digits.substring(0, 5)}-${digits.substring(5)}&#x27;;
+}</pre>
+<p><strong>Experimente:</strong> 01001000 e 01001-000 devem representar o mesmo CEP. Já “123”, “a01001000” e “0100-1000” devem ser rejeitados. A expressão regular verifica o formato, não a existência do endereço — essa segunda verificação pertence ao serviço.</p>
+<figure><img src="https://raw.githubusercontent.com/kleberandrade/search-cep-aulas-flutter/master/docs/screenshots/web-invalid.jpg" alt="Figura 2 — Mensagem real de validação: a entrada precisa ter oito dígitos antes de consultar o ViaCEP."><figcaption>Figura 2 — Mensagem real de validação: a entrada precisa ter oito dígitos antes de consultar o ViaCEP.</figcaption></figure>
+<h2>5. Modele o endereço e confira o retorno</h2>
+<p>A classe <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/lib/models/result_cep.dart">ResultCep</a> representa a resposta em memória. Seus dados são imutáveis: depois da criação, a tela não pode alterar acidentalmente o endereço. <code>fromMap</code> confere os tipos dos campos, valida o CEP retornado e exige cidade e UF coerentes. Campos opcionais ausentes recebem texto vazio.</p>
+<p>Trecho do modelo: o retorno válido é armazenado em um mapa não modificável. Os getters expõem os campos usados na tela, enquanto <code>toMap</code> devolve uma cópia e <code>toJson</code> permite inspecionar a serialização. Consulte o arquivo completo para acompanhar os demais campos, incluindo os já presentes na versão original da aula.</p>
+<pre>  factory ResultCep.fromMap(Map&lt;String, dynamic&gt; map) {
+    final fields = &lt;String, String&gt;{};
+    for (final key in [
+      &#x27;cep&#x27;,
+      &#x27;logradouro&#x27;,
+      &#x27;complemento&#x27;,
+      &#x27;bairro&#x27;,
+      &#x27;localidade&#x27;,
+      &#x27;uf&#x27;,
+      &#x27;unidade&#x27;,
+      &#x27;ibge&#x27;,
+      &#x27;gia&#x27;,
+      &#x27;ddd&#x27;,
+      &#x27;siafi&#x27;,
+      &#x27;estado&#x27;,
+      &#x27;regiao&#x27;,
+    ]) {
+      final value = map[key];
+      if (value != null &amp;&amp; value is! String) {
+        throw FormatException(&#x27;Invalid $key&#x27;);
+      }
+      fields[key] = (value as String? ?? &#x27;&#x27;).trim();
+    }
+    fields[&#x27;cep&#x27;] = Cep.parse(fields[&#x27;cep&#x27;]!).formatted;
+    if (fields[&#x27;localidade&#x27;]!.isEmpty ||
+        !RegExp(r&#x27;^[A-Z]{2}$&#x27;).hasMatch(fields[&#x27;uf&#x27;]!)) {
+      throw const FormatException(&#x27;Missing city or state&#x27;);
+    }
+    return ResultCep._(Map.unmodifiable(fields));
+  }</pre>
+<p>Não há persistência neste aplicativo. Converter JSON em objeto não significa gravar um banco de dados ou histórico. Se você acrescentar armazenamento como exercício, precisará decidir como limpar, proteger e migrar os dados.</p>
+<h2>6. Isole a rede: ViaCepService</h2>
+<p>O serviço recebe um <code>http.Client</code> pelo construtor. Em produção usamos o cliente real; nos testes usamos <code>MockClient</code>. Assim podemos testar respostas inválidas e timeout sem depender da disponibilidade da internet. Quem cria o cliente também deve fechá-lo quando terminar de usá-lo.</p>
+<p>A interface <code>AddressLookup</code> define uma única operação: receber um CEP validado e devolver um endereço. A implementação real usa <code>Uri.https</code>, decodificação UTF-8 e timeout de dez segundos. Veja o serviço completo:</p>
+<pre>import &#x27;dart:async&#x27;;
+import &#x27;dart:convert&#x27;;
+import &#x27;package:http/http.dart&#x27; as http;
+import &#x27;../domain/cep.dart&#x27;;
+import &#x27;../models/result_cep.dart&#x27;;
+
+enum FailureKind { notFound, unavailable, invalidResponse, timeout, network }
+
+final class LookupFailure implements Exception {
+  const LookupFailure(this.kind);
+  final FailureKind kind;
+  String get message =&gt; switch (kind) {
+    FailureKind.notFound =&gt;
+      &#x27;CEP não encontrado. Confira os números e tente outro CEP.&#x27;,
+    FailureKind.unavailable =&gt;
+      &#x27;O ViaCEP está indisponível. Tente novamente em instantes.&#x27;,
+    FailureKind.invalidResponse =&gt;
+      &#x27;O serviço retornou uma resposta inválida. Tente novamente.&#x27;,
+    FailureKind.timeout =&gt; &#x27;A consulta demorou demais. Tente novamente.&#x27;,
+    FailureKind.network =&gt;
+      &#x27;Não foi possível conectar. Verifique sua conexão e tente novamente.&#x27;,
+  };
+}
+
+abstract interface class AddressLookup {
+  Future&lt;ResultCep&gt; lookup(Cep cep);
+}
+
+class ViaCepService implements AddressLookup {
+  ViaCepService(this.client, {this.timeout = const Duration(seconds: 10)});
+  final http.Client client;
+  final Duration timeout;
+
+  @override
+  Future&lt;ResultCep&gt; lookup(Cep cep) async {
+    try {
+      final response = await client
+          .get(Uri.https(&#x27;viacep.com.br&#x27;, &#x27;/ws/${cep.digits}/json/&#x27;))
+          .timeout(timeout);
+      if (response.statusCode != 200) {
+        throw const LookupFailure(FailureKind.unavailable);
+      }
+      return _decode(utf8.decode(response.bodyBytes), cep);
+    } on TimeoutException {
+      throw const LookupFailure(FailureKind.timeout);
+    } on http.ClientException {
+      throw const LookupFailure(FailureKind.network);
+    } on FormatException {
+      throw const LookupFailure(FailureKind.invalidResponse);
+    }
+  }
+
+  ResultCep _decode(String body, Cep requested) {
+    final decoded = jsonDecode(body);
+    if (decoded is! Map&lt;String, dynamic&gt;) {
+      throw const FormatException(&#x27;Expected object&#x27;);
+    }
+    if (decoded[&#x27;erro&#x27;] == true || decoded[&#x27;erro&#x27;] == &#x27;true&#x27;) {
+      throw const LookupFailure(FailureKind.notFound);
+    }
+    final address = ResultCep.fromMap(decoded);
+    if (address.cep != requested.formatted) {
+      throw const FormatException(&#x27;Unexpected CEP&#x27;);
+    }
+    return address;
+  }
+}</pre>
+<p>Leia o método em três passos: primeiro obtenha a resposta; depois confira o status e decodifique o corpo; por último valide o objeto e compare o CEP recebido com o solicitado. <code>LookupFailure</code> mantém categorias diferentes de falha, permitindo mensagens úteis para a pessoa que faz a consulta.</p>
+<p><strong>Checkpoint:</strong> uma resposta com <code>erro</code> deve virar “CEP não encontrado”; uma falha de rede deve pedir para verificar a conexão; JSON inválido deve informar que a resposta do serviço não pôde ser usada. O aplicativo não deve encerrar com uma exceção sem tratamento.</p>
+<h2>7. Controle os estados e as respostas atrasadas</h2>
+<p>A tela precisa representar quatro situações: inicial, carregando, sucesso e erro. Elas são classes de um tipo <code>sealed</code>, em <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/lib/state/search_controller.dart">SearchController</a>. Isso permite usar um <code>switch</code> que cobre todos os estados.</p>
+<p>Imagine duas consultas: a primeira demora, mas a segunda responde rapidamente. Sem controle, a primeira resposta poderia sobrescrever a segunda. Cada busca ou edição incrementa uma geração; o resultado só é aplicado se ainda pertence à geração mais recente. As requisições antigas podem terminar em segundo plano, mas seus resultados são ignorados.</p>
+<pre>import &#x27;package:flutter/foundation.dart&#x27;;
+import &#x27;../domain/cep.dart&#x27;;
+import &#x27;../models/result_cep.dart&#x27;;
+import &#x27;../services/via_cep_service.dart&#x27;;
+
+sealed class SearchState {
+  const SearchState();
+}
+
+final class SearchIdle extends SearchState {
+  const SearchIdle();
+}
+
+final class SearchLoading extends SearchState {
+  const SearchLoading();
+}
+
+final class SearchSuccess extends SearchState {
+  const SearchSuccess(this.address);
+  final ResultCep address;
+}
+
+final class SearchError extends SearchState {
+  const SearchError(this.message);
+  final String message;
+}
+
+/// Each edit/search invalidates older responses without blocking the input.
+class SearchController extends ChangeNotifier {
+  SearchController(this.service);
+  final AddressLookup service;
+  SearchState state = const SearchIdle();
+  int _generation = 0;
+  bool _disposed = false;
+
+  void inputChanged() {
+    _generation++;
+    _emit(const SearchIdle());
+  }
+
+  Future&lt;void&gt; search(String input) async {
+    final generation = ++_generation;
+    try {
+      final cep = Cep.parse(input);
+      _emit(const SearchLoading());
+      final address = await service.lookup(cep);
+      if (generation == _generation) _emit(SearchSuccess(address));
+    } on FormatException {
+      if (generation == _generation) {
+        _emit(
+          const SearchError(
+            &#x27;Informe um CEP com 8 dígitos. Exemplo: 01001-000.&#x27;,
+          ),
+        );
+      }
+    } on LookupFailure catch (error) {
+      if (generation == _generation) _emit(SearchError(error.message));
+    }
+  }
+
+  void _emit(SearchState next) {
+    if (_disposed) return;
+    state = next;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _generation++;
+    super.dispose();
+  }
+}</pre>
+<p>Observe a sequência em <code>search</code>: validar, emitir carregamento, esperar o serviço e publicar o resultado se a geração ainda for atual. <code>inputChanged</code> invalida a consulta anterior, e <code>dispose</code> impede notificações depois que o controlador foi encerrado.</p>
+<h2>8. Apresente informações em vez de JSON bruto</h2>
+<p>Em <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/lib/main.dart">main.dart</a>, <code>CepApp</code> configura Material 3 e a localização em português. O widget proprietário cria o cliente e o controlador quando eles não são injetados e libera esses recursos no descarte. A <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/lib/views/home_page.dart">HomePage completa</a> separa formulário, painel de status e cartão de endereço em widgets.</p>
+<p>O campo usa <code>TextInputAction.search</code>: pressionar Enter realiza a busca. O botão Limpar CEP apaga entrada e resultado e devolve o foco ao campo. O texto permanece editável durante a consulta, e os estados de carregamento e erro não bloqueiam uma nova tentativa.</p>
+<p>Este trecho real de <code>HomePage</code> escolhe a apresentação de cada estado:</p>
+<pre>  Widget _result(search.SearchState state) =&gt; switch (state) {
+    search.SearchSuccess(:final address) =&gt; _AddressPanel(address: address),
+    search.SearchLoading() =&gt; const _StatusPanel(
+      icon: Icons.travel_explore,
+      title: &#x27;Consultando o ViaCEP…&#x27;,
+      message: &#x27;Você pode alterar o CEP enquanto espera.&#x27;,
+      loading: true,
+    ),
+    search.SearchError(:final message) =&gt; _StatusPanel(
+      icon: Icons.info_outline,
+      title: &#x27;Vamos tentar de novo?&#x27;,
+      message: message,
+      error: true,
+    ),
+    search.SearchIdle() =&gt; const _StatusPanel(
+      icon: Icons.location_on_outlined,
+      title: &#x27;Seu próximo destino começa aqui&#x27;,
+      message:
+          &#x27;O endereço aparecerá aqui após a consulta.\nSe preferir, comece por um dos exemplos.&#x27;,
+    ),
+  };</pre>
+<p>O retorno é exibido em campos selecionáveis: CEP, logradouro, bairro, cidade/UF, complemento, DDD e IBGE, conforme o que o serviço informar. Os valores também possuem rótulos acessíveis, e as mudanças de estado são anunciadas pela semântica do Flutter. O botão Copiar endereço mostra uma confirmação; se a área de transferência falhar, o texto continua disponível para seleção.</p>
+<figure><img src="https://raw.githubusercontent.com/kleberandrade/search-cep-aulas-flutter/master/docs/screenshots/web-address.jpg" alt="Figura 3 — Consulta real de 01001-000: endereço da Praça da Sé apresentado em campos legíveis, com confirmação de cópia."><figcaption>Figura 3 — Consulta real de 01001-000: endereço da Praça da Sé apresentado em campos legíveis, com confirmação de cópia.</figcaption></figure>
+<p>Em telas largas os painéis ficam lado a lado. Em telas estreitas passam para uma coluna com rolagem. Não use largura fixa para todo o conteúdo: o mesmo formulário precisa funcionar quando a pessoa amplia a fonte ou utiliza uma tela menor.</p>
+<figure><img src="https://raw.githubusercontent.com/kleberandrade/search-cep-aulas-flutter/master/docs/screenshots/web-mobile-address.jpg" alt="Figura 4 — Captura real em viewport de 390 px: o cartão se reorganiza em uma coluna e permanece legível com rolagem."><figcaption>Figura 4 — Captura real em viewport de 390 px: o cartão se reorganiza em uma coluna e permanece legível com rolagem.</figcaption></figure>
+<h2>9. Pratique mesmo sem internet</h2>
+<p>Execute o modo de demonstração para estudar o fluxo sem fazer consultas externas:</p>
+<pre>flutter run -d chrome --dart-define=DEMO=true</pre>
+<p>O modo é identificado na tela e carrega <code>assets/sao_paulo.json</code>. Ele contém somente o exemplo de São Paulo, 01001-000; os demais CEPs mostram “não encontrado”. Sem essa opção, a consulta é real e vai para o ViaCEP. Um exemplo local não deve ser apresentado como resposta atual de um serviço externo.</p>
+<h2>10. Teste os comportamentos</h2>
+<p>Execute a suíte determinística e a análise antes de gerar o build:</p>
+<pre>flutter analyze
+flutter test --coverage
+flutter build web</pre>
+<p>Os testes cobrem formato e normalização, serialização do modelo, resposta válida, CEP inexistente, HTTP e JSON inválidos, tipo incorreto de campo, CEP retornado diferente, falha de conexão, timeout, buscas rápidas, edição durante a espera, descarte do controlador, demonstração local e estados da interface. Há também verificação de layout estreito com texto a 200% e regressão dos rótulos acessíveis.</p>
+<p>O código dos testes está em <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/test/lookup_test.dart">test/lookup_test.dart</a>, <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/test/demo_test.dart">test/demo_test.dart</a> e <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/test/widget_test.dart">test/widget_test.dart</a>. Eles usam fixtures e <code>MockClient</code>; não acessam a API real. Na validação desta versão, 21 testes passaram e a cobertura de linhas medida foi de 90,8%. Esse número não substitui os cenários de teste nem representa cobertura de mutação.</p>
+<p>Para uma verificação separada contra o serviço real, use:</p>
+<pre>dart run tool/smoke.dart</pre>
+<p>O comando consulta 01001-000 e confere São Paulo/SP. Ele depende da rede e da disponibilidade do ViaCEP e não faz parte da suíte determinística do CI. O build Web e a consulta pelo navegador foram validados; macOS debug e iOS sem assinatura também compilaram. Isso não equivale a teste em telefone físico. Android ainda depende de licenças aceitas pelo desenvolvedor; macOS release apresentou uma limitação de empacotamento nesta combinação de ferramentas.</p>
+<h2>Exercícios para continuar a aula</h2>
+<ol><li>Acrescente alternância entre temas claro e escuro usando <code>ThemeMode</code>. Verifique o contraste nos dois temas.</li><li>Adicione outro exemplo offline e um teste que confirme o endereço correto. Mantenha clara a diferença entre demonstração e consulta real.</li><li>Teste navegação com Tab, Enter e leitor de tela. Confira os valores do endereço, não apenas os títulos dos campos.</li><li>Escreva um teste em que a primeira busca termina depois da segunda e explique por que a geração impede o resultado antigo.</li><li>Se implementar histórico, defina uma ação de limpeza e teste a migração antes de alterar o formato armazenado.</li></ol>
+<p>Validação e tratamento de erro, antes propostos como desafios, agora fazem parte da implementação. Os componentes nativos de status e <code>SnackBar</code> atendem às mensagens desta aula. As antigas sugestões de <code>dynamic_theme</code>, <code>flushbar</code> e <code>share</code> não são dependências atuais do projeto.</p>
+<h2>Código, créditos e referências</h2>
+<p>Código completo e instruções de execução: <a href="https://github.com/kleberandrade/search-cep-aulas-flutter">search-cep-aulas-flutter</a>. Projeto de Kleber de Oliveira Andrade, publicado originalmente em 2019, sob licença MIT. O <a href="https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/docs/modernization-log.md">log de modernização</a> registra as verificações e limitações. A capa é uma ilustração editorial criada com auxílio de IA; as figuras do aplicativo são capturas reais, preservadas no repositório.</p>
+<ul><li><a href="https://viacep.com.br/">Documentação do ViaCEP</a>.</li><li><a href="https://pub.dev/packages/http">Pacote http</a>.</li><li><a href="https://docs.flutter.dev/cookbook/forms">Formulários em Flutter</a> e <a href="https://docs.flutter.dev/cookbook/design/themes">temas</a>.</li><li><a href="https://app.quicktype.io/">Quicktype</a>, referência original para explorar a geração de modelos; sempre revise os tipos e as validações geradas.</li><li><a href="https://medium.com/@nitishk72/form-validation-in-flutter-d762fbc9212c">Artigo de validação de formulários de @nitishk72</a>, referência histórica de terceiro, não alterada nesta atualização.</li><li><a href="https://www.youtube.com/watch?v=qAzxZJ8NRwI">Vídeo sobre exceções</a> e <a href="https://rxlabz.github.io/panache/">Panache</a>, referências do material original.</li><li><a href="https://github.com/public-apis/public-apis">Coletânea de APIs públicas</a>, para explorar novas integrações como exercício.</li></ul>
+<p>Ao final, você não apenas consulta um CEP: consegue explicar onde a entrada é validada, como a rede é isolada, por que os estados importam e como provar que os principais caminhos funcionam. Um forte abraço e bons estudos!</p>
