@@ -1,7 +1,7 @@
 name: search_cep
 description: Accessible Brazilian postal code lookup with Flutter and ViaCEP.
 publish_to: none
-version: 2.0.0+2
+version: 2.0.1+3
 environment:
   sdk: '>=3.14.0 <4.0.0'
   flutter: '>=3.50.0'
@@ -14,6 +14,11 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+# Exact compatibility overrides validated with Flutter 3.50.0 / Dart 3.14.0.
+# Re-test and remove when the official SDK constraints allow these versions.
+dependency_overrides:
+  material_color_utilities: 0.13.1
+  test_api: 0.7.15
 flutter:
   uses-material-design: true
   assets:

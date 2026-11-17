@@ -77,3 +77,6 @@ coverage/
 
 # Local version-manager SDK links and caches
 .fvm/
+
+# Local-only dependency experiments; shared overrides belong in pubspec.yaml
+pubspec_overrides.yaml
