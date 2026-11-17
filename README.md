@@ -1,87 +1,88 @@
 # Brazilian Postal Code Lookup
 
-[![Language: Dart](https://img.shields.io/badge/Language-Dart-0175C2)](https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/pubspec.yaml)
-[![Framework: Flutter](https://img.shields.io/badge/Framework-Flutter-02569B)](https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/pubspec.yaml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-555555)](https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/LICENSE)
+[![Flutter 3.41.9](https://img.shields.io/badge/Flutter-3.41.9-02569B)](https://docs.flutter.dev/)
+[![Dart 3.11.5](https://img.shields.io/badge/Dart-3.11.5-0175C2)](https://dart.dev/)
+[![License MIT](https://img.shields.io/badge/License-MIT-555555)](LICENSE)
 
-Flutter classroom app for looking up Brazilian postal codes with the ViaCEP API.
+A Flutter classroom app for looking up Brazilian postal codes through [ViaCEP](https://viacep.com.br/). It validates input, handles service failures, and presents selectable address details in a responsive Material 3 interface. No API key, Firebase project, account, or database is needed.
 
-## Getting started
+![Real Web app querying ViaCEP](docs/screenshots/web-address.jpg)
 
-- Select a Flutter release whose bundled Dart SDK satisfies the manifest constraint, then run the commands below from the repository root.
+## Run
+
+Verified toolchain: Flutter **3.41.9** stable with Dart **3.11.5**, Chrome 157, and Xcode 27.2 on macOS. The manifest requires Dart >=3.11.0 <4.0.0 and Flutter >=3.41.0. Use the pinned toolchain for reproducible builds; newer SDKs have not been verified.
 
 ```sh
+git clone https://github.com/kleberandrade/search-cep-aulas-flutter.git
+cd search-cep-aulas-flutter
 flutter pub get
-flutter run
+flutter run -d chrome
 ```
 
-- If the app depends on Firebase or another external service, configure your own service project using the dependencies and original notes; credentials are not supplied by this guide.
+Enter `01001-000` or `01001000`, then press Enter or **Buscar endereço**. The examples trigger a live lookup. **Limpar CEP** clears the input/result and restores keyboard focus. **Copiar endereço** copies plain address text. Results remain selectable if clipboard access is unavailable. Empty optional fields display an explicit fallback. The interface is in Brazilian Portuguese.
 
-## Recorded requirements
+To try the bundled São Paulo example without contacting ViaCEP:
 
-- Dart SDK constraint from [`pubspec.yaml`](https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/pubspec.yaml): `>=2.1.0 <3.0.0`.
+```sh
+flutter run -d chrome --dart-define=DEMO=true
+```
 
-## Repository map
+Demo mode is explicitly labelled and only supports `01001-000`. Other valid codes produce “not found” in this mode. The controlled sample lives in `assets/sao_paulo.json`. Without `DEMO=true`, all searches use the real service. No silent fallback or fabricated live results are used.
 
-- [lib](https://github.com/kleberandrade/search-cep-aulas-flutter/tree/master/lib)
-- [android](https://github.com/kleberandrade/search-cep-aulas-flutter/tree/master/android)
-- [ios](https://github.com/kleberandrade/search-cep-aulas-flutter/tree/master/ios)
+## Architecture and behavior
 
-## Validation status
+- `lib/domain/cep.dart`: validated CEP value object. Accepts eight ASCII digits or the standard five-three mask, trims surrounding whitespace, and preserves leading zeros. Letters and other punctuation are rejected.
+- `lib/models/result_cep.dart`: immutable address, strict decoding at the network boundary, optional fields normalized to empty strings. Known original fields are retained in serialization, alongside current ViaCEP fields.
+- `lib/services/`: injected HTTP client and explicit demo implementation behind `AddressLookup`. HTTPS, UTF-8, a ten-second timeout, typed failures, and response CEP matching. No automatic retries or API key.
+- `lib/state/search_controller.dart`: idle/loading/success/error states; each search or input edit invalidates older responses. A slow request cannot overwrite newer input. Requests may finish in the background; stale responses are ignored.
+- `lib/views/home_page.dart`: input, example actions, progress/error/empty states and address presentation. Native buttons and focus, live status announcements, one-column narrow layout, and two-column wide layout.
+- `lib/main.dart`: theme, Portuguese localization and resource ownership; closes its client and disposes its controller.
 
-This update documents the tracked source and project metadata. It does not certify a successful build, device test or compatibility with a current toolchain. Follow any project-specific validation instructions in the original material.
+**Glossary:** CEP is an eight-digit Brazilian postal code; address is a validated ViaCEP response; “not found” means a valid CEP whose response contains `erro`; generation is the identity of the latest user search/edit.
 
-## License and attribution
+No lookup history or address data is persisted. Live searches send the entered CEP to ViaCEP. The app cannot guarantee external address freshness or service availability.
 
-See [LICENSE](https://github.com/kleberandrade/search-cep-aulas-flutter/blob/master/LICENSE) and any notices accompanying third-party code and assets. This documentation update does not change licensing or authorship.
+## Checks and builds
 
----
+```sh
+dart format --output=none --set-exit-if-changed lib test tool
+flutter analyze
+flutter test --coverage
+flutter build web
+# Optional integration check: contacts the actual external service
+dart run tool/smoke.dart
+# Native builds require the corresponding local toolchain
+flutter build macos --debug
+flutter build ios --no-codesign
+flutter build apk --debug
+```
 
-## Original project material
+The deterministic suite covers normalization, model serialization, valid responses, nonexistent CEP, HTTP/JSON/schema failures, response mismatch, network failure, timeout, rapid searches, edited input, disposal, local examples, and widget states/retry. Layout tests include a narrow viewport with 200% text. `http/testing.dart` and fixtures are used only in tests. The optional smoke script is a separate real ViaCEP request, excluded from CI to avoid external-service flakiness.
 
-# Consulta de CEP
+The workflow `.github/workflows/flutter.yml` runs formatting, analysis, tests and Web build on `master` pushes and pull requests. Version badges identify the tested SDK, not a fabricated CI or coverage result. See [validation and action log](docs/modernization-log.md) for actual outcomes and platform limitations.
 
-Aplicativo para consultar CEP através da API do VIA CEP
+For an existing Web build preview:
 
-Tutorial de criação deste app: http://bit.ly/2kcGFQh
+```sh
+python3 -m http.server 8766 --bind 127.0.0.1 --directory build/web
+```
 
-<p align="center">
-    <img src="https://miro.medium.com/max/1440/1*St_MBopTzlcfQzasVw1-GA.png" width="800"/>
-</p>
+Open `http://127.0.0.1:8766`. A production host must serve the generated `build/web` folder over HTTPS. No deployment is configured by this project.
 
-## Como clonar e importar
+## Migration from the 2019 classroom version
 
--   Faça um fork do projeto
--   Abra o terminal do Visual Studio Code
--   Digite (troque kleberandrade pelo nome do seu usuários): git clone https://github.com/kleberandrade/search-cep-aulas-flutter search_cep
+Dart 2 nullable mutable fields were replaced with Dart 3 null-safe immutable boundary parsing. `RaisedButton` was replaced with Material 3 buttons, raw JSON output with address fields, and static `fetchCep` with an injected service: `ViaCepService(client).lookup(Cep.parse(input))`. The HTTP client belongs to the caller, which must close it. Code using the old internal Dart API must adopt this call; this application is not a published package.
 
-## Desafios
+Android now uses the Flutter plugin DSL, Kotlin 2.2.20, AGP 8.11.1, Gradle 8.14 and Java 17 source compatibility; SDK levels follow the installed Flutter defaults. INTERNET permission is present in the release manifest. Android retains `com.example.search_cep` and iOS retains `com.example.searchCep`; configure signing and a production identifier before distributing your own app. Local SDK paths and generated registrants are no longer tracked.
 
--   Criar e usar temas Light e Dart (para saber mais sobre temas [clique aqui](https://flutter.dev/docs/cookbook/design/themes), e se você quiser usar um editor de temas [clique aqui](https://rxlabz.github.io/panache/#/))
--   Criar um IconButton na AppBar para alternar entre os temas (dica: use o [plugin dynamic_theme](https://pub.dev/packages/dynamic_theme))
--   Criar um formulário para adicionar todas os campos do JSON ([formulários](https://flutter.dev/docs/cookbook/forms))
--   Validar o campo de digitação de CEP ([validações em flutter](https://medium.com/@nitishk72/form-validation-in-flutter-d762fbc9212c))
--   Tratar todas [exceções](https://www.youtube.com/watch?v=qAzxZJ8NRwI) e utilize [Flushbar](https://pub.dev/packages/flushbar) para exibir os erros para o usuário
--   Adicionar um IconButton na AppBar para compartilhar o CEP (utilize o [plugin share](https://pub.dev/packages/share))
+The iOS runner uses the modern Flutter scene lifecycle; its minimum target is iOS 15. macOS minimum is 12 to match the available Xcode toolchain. Web and macOS runners were added from the installed Flutter templates. Original iOS artwork and MIT attribution are preserved. Android licenses must be accepted by the developer, never by automation. No persistent store existed before or after this migration, so no data migration is needed.
 
-## Licença
+## Classroom material and credits
 
-    Copyright 2019 Kleber de Oliveira Andrade
-    
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-    
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
-    
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
+Original tutorial by **Kleber de Oliveira Andrade**: [Consultando CEPs com Flutter](https://medium.com/flutter-comunidade-br/consultando-ceps-com-flutter-a395b86ce34a), originally linked as [bit.ly/2kcGFQh](http://bit.ly/2kcGFQh). The article was opened and read during modernization. [Prepared Portuguese revision](docs/medium-update.pt-BR.md) records its editorial access status and contains final matching source excerpts.
+
+The original [form validation article by @nitishk72](https://medium.com/@nitishk72/form-validation-in-flutter-d762fbc9212c) remains a third-party historical reference. It was not edited. Useful original learning references: [themes](https://docs.flutter.dev/cookbook/design/themes), [forms](https://docs.flutter.dev/cookbook/forms), [async exceptions video](https://www.youtube.com/watch?v=qAzxZJ8NRwI), [Panache theme editor](https://rxlabz.github.io/panache/).
+
+Updated exercises: add theme switching with `ThemeMode`; test screen readers; add clearly labelled local examples; evaluate native sharing if needed. Input validation and error handling are now implemented. Native status widgets and SnackBar replace the old Flushbar suggestion; the old `dynamic_theme` and `share` package suggestions are historical, not dependencies of this version.
+
+MIT — Copyright 2019 Kleber de Oliveira Andrade. See [LICENSE](LICENSE). Flutter-generated platform assets and Material icons are used under their respective upstream licenses; no third-party article or image was relicensed. Screenshots in `docs/screenshots` show the real running app and repository metadata, not design mockups.
